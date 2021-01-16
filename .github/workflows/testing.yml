@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: 0 0 * * * # daily at 00:00
+
+jobs:
+  build-linux:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        build_type: [debug, release]
+
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: 'recursive'
+
+    - name: Set up dependencies
+      run: |
+        sudo apt install -y protobuf-compiler libprotobuf-dev
+
+    - name: Create Build Environment
+      working-directory: ${{runner.workspace}}
+      run: |
+        cmake -E make_directory build
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build/
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Cache externals
+      uses: actions/cache@v2
+      with:
+        path: ${{runner.workspace}}/build/externals
+        key: ${{ runner.os }}-build-${{ matrix.build_type }}-${{ hashFiles('externals/**/CMakeLists.txt') }}
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build/
+      shell: bash
+      run: 
+        cmake --build . --config ${{ matrix.build_type }} -j 4
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build/
+      shell: bash
+      run: ctest -L ExplodingKittens
