@@ -19,12 +19,12 @@ struct Player;
 struct NextTurn {};
 struct Game : public msm::front::state_machine_def<Player> {
     Game(std::vector<int> uids) {
-        for(auto uid: uids){
+        for (auto uid : uids) {
             Players.emplace_back(uid);
         }
     }
- 
-    // entry and exit of state: log   
+
+    // entry and exit of state: log
     template <class Event, class FSM>
     void on_entry(Event const &, FSM &) {
         std::cout << "entering: Player" << std::endl;
@@ -34,11 +34,9 @@ struct Game : public msm::front::state_machine_def<Player> {
         std::cout << "leaving: Player" << std::endl;
     }
 
-    struct Playing : public msm::front::state<> {
-    };
+    struct Playing : public msm::front::state<> {};
 
-    struct Ended : public msm::front::state<> {
-    };
+    struct Ended : public msm::front::state<> {};
 
     // the initial state of the player SM. Must be defined
     typedef Playing initial_state;
@@ -65,9 +63,24 @@ struct Game : public msm::front::state_machine_def<Player> {
     std::list<Player> DiedPlayers;
 };
 
+enum CardType {
+    Bomb = -1,
+    Skip,
+    Shirk,
+    Reverse,
+    Predict,
+    SeeThrough,
+    Swap,
+    GetBottom,
+    Shuffle,
+    Extort,
+    BombDisposal
+};
 // events
 struct PlayCardSkip {};
-struct PlayCardShirk {};
+struct PlayCardShirk {
+    int TargetUid{0};
+};
 struct PlayCardReverse {};
 struct PlayCardPredict {};
 struct PlayCardSeeThrough {};
@@ -76,17 +89,22 @@ struct PlayCardGetBottom {};
 struct PlayCardShuffle {};
 struct PlayCardExtort {};
 struct PlayCardBombDisposal {};
-struct SelectExtortCard {};
+struct SelectExtortCard {
+    int SrcUid{0};
+    int TargetUid{0};
+};
 struct GetExtortCard {};
 struct MyTurn {};
 
-struct DrawCard {};
+struct DrawCard {
+    CardType Card{Bomb};
+};
 struct TimeOut {};
 
 struct Player : public msm::front::state_machine_def<Player> {
-    Player(int uid):uid(uid) {}
+    Player(int uid) : Uid(uid) {}
 
-    // entry and exit of state: log  
+    // entry and exit of state: log
     template <class Event, class FSM>
     void on_entry(Event const &, FSM &) {
         std::cout << "entering: Player" << std::endl;
@@ -97,57 +115,46 @@ struct Player : public msm::front::state_machine_def<Player> {
     }
 
     // The list of FSM states
-    struct Exploding : public msm::front::state<> {
-    };
+    struct Exploding : public msm::front::state<> {};
 
-    struct Stopped : public msm::front::state<> {
-    };
+    struct Stopped : public msm::front::state<> {};
 
-    struct Playing : public msm::front::state<> {
+    struct Playing : public msm::front::state<> {};
 
-    };
+    struct Extorted : public msm::front::state<> {};
 
-    struct Extorted : public msm::front::state<> {
-    };
-
-    struct Died : public msm::front::state<> {
-    };
+    struct Died : public msm::front::state<> {};
 
     // the initial state of the player SM. Must be defined
     typedef Stopped initial_state;
 
     // transition actions
-    
+    // you can reuse them in another machine if you wish
+
     // guard conditions
     struct IsExtortSrc {
         template <class EVT, class FSM, class SourceState, class TargetState>
         bool operator()(EVT const &evt, FSM &fsm, SourceState &src,
                         TargetState &tgt) {
-            return true;
+            return evt.TargetUid == fsm.Uid;
         }
     };
     struct IsShirkTarget {
         template <class EVT, class FSM, class SourceState, class TargetState>
-        bool operator()(EVT const &evt, FSM &, SourceState &, TargetState &) {
-            // to test a guard condition, let's say we understand only CDs, not
-            // DVD
-            if (evt.disc_type != DISK_CD) {
-                std::cout << "wrong disk, sorry" << std::endl;
-                return false;
-            }
-            return true;
+        bool operator()(EVT const &evt, FSM & fsm, SourceState &, TargetState &) {
+            return evt.TatgetUid == fsm.Uid;
         }
     };
     struct IsBomb {
         template <class EVT, class FSM, class SourceState, class TargetState>
-        bool operator()(EVT const &evt, FSM &, SourceState &, TargetState &) {
-            return true;
+        bool operator()(EVT const &evt, FSM & fsm, SourceState &, TargetState &) {
+            return evt.Card == Bomb;
         }
     };
     struct IsExtortTarget {
         template <class EVT, class FSM, class SourceState, class TargetState>
-        bool operator()(EVT const &evt, FSM &, SourceState &, TargetState &) {
-            return true;
+        bool operator()(EVT const &evt, FSM & fsm, SourceState &, TargetState &) {
+            return evt.TatgetUid == fsm.Uid;
         }
     };
 
@@ -160,9 +167,7 @@ struct Player : public msm::front::state_machine_def<Player> {
               Row<Stopped, MyTurn, Playing, none, none>,
               Row<Stopped, GetExtortCard, Playing, none, IsExtortSrc>,
               // playing card phase
-              Row<Playing, PlayCardSkip, Stopped,
-                  none,
-                  none>,
+              Row<Playing, PlayCardSkip, Stopped, none, none>,
               Row<Playing, PlayCardShirk, Playing, none, none>,
               Row<Playing, PlayCardShirk, Stopped, none, IsShirkTarget>,
               Row<Playing, PlayCardReverse, Stopped, none, none>,
@@ -184,7 +189,5 @@ struct Player : public msm::front::state_machine_def<Player> {
               Row<Exploding, TimeOut, Died, none, none>
               //  +---------+-------------+---------+---------------------------+----------------------+
               > {};
-    int uid{0};
+    int Uid{0};
 };
-// Pick a back-end
-typedef msm::back::state_machine<Player> player;
