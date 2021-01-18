@@ -14,4 +14,3 @@ include_directories( ${Boost_INCLUDE_DIR})
 add_executable(ExplodingKittens main.cc)
 
 target_link_libraries(ExplodingKittens ${Boost_LIBRARIES})
-
