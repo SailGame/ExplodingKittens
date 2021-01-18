@@ -9,12 +9,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
 
     steps:
     - uses: actions/checkout@v1
       with:
         submodules: 'recursive'
+
+    - name: Set up dependencies
+      run: |
+        sudo apt install -y protobuf-compiler libprotobuf-dev libboost-all-dev
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
