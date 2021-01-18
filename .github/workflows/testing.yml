@@ -25,7 +25,7 @@ jobs:
 
     - name: Set up dependencies
       run: |
-        sudo apt install -y protobuf-compiler libprotobuf-dev
+        sudo apt install -y protobuf-compiler libprotobuf-dev libboost-all-dev
 
     - name: Create Build Environment
       working-directory: ${{runner.workspace}}
