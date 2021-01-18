@@ -8,7 +8,7 @@ add_subdirectory(externals)
 add_subdirectory(lib)
 add_subdirectory(test)
 
-find_package(Boost 1.65.1 COMPONENTS program_options REQUIRED)
+find_package(Boost 1.62.1 COMPONENTS program_options REQUIRED)
 include_directories( ${Boost_INCLUDE_DIR})
 
 add_executable(ExplodingKittens main.cc)

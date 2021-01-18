@@ -3,8 +3,9 @@
 #include <gtest/gtest.h>
 #include <sys/mount.h>
 
-#include <state_machine.hpp>
 #include <string>
+
+#include "state_machine.hpp"
 
 namespace Test {
 class ContainerFixture : public ::testing::Test {
@@ -21,6 +22,10 @@ class ContainerFixture : public ::testing::Test {
     }
 };
 
-TEST_F(ContainerFixture, Create) {}
+TEST_F(ContainerFixture, CreateGame) {
+    for (auto it : mGame.mPlayers) {
+        it.PrintCards();
+    }
+}
 
 }  // namespace Test

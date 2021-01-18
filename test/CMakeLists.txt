@@ -1,5 +1,5 @@
 aux_source_directory(. DIR_SRCS)
-include_directories(../libs)
+include_directories(../lib)
 include(GoogleTest)
 
 add_executable(unit_test ${DIR_SRCS})
