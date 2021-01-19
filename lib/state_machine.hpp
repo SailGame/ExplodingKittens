@@ -9,74 +9,24 @@
 #include <list>
 #include <map>
 #include <vector>
-#define BombNum 4
-#define SkipNum 8
-#define ShirkNum 5
-#define ReverseNum 5
-#define PredictNum 4
-#define SeeThroughNum 4
-#define SwapNum 3
-#define GetBottomNum 3
-#define ShuffleNum 4
-#define ExtortNum 4
-#define BombDisposalNum 6
-#define InitialCardsNum 5
+
+#include "CardPool.hpp"
+
 namespace mpl = boost::mpl;
 namespace msm = boost::msm;
 using namespace msm::front;
 using namespace msm::front::euml;
-enum CardType {
-    Bomb,
-    Skip,
-    Shirk,
-    Reverse,
-    Predict,
-    SeeThrough,
-    Swap,
-    GetBottom,
-    Shuffle,
-    Extort,
-    BombDisposal
-};
-static std::vector<std::string> CardNames = {
-    "Bomb", "Skip",      "Shirk",   "Reverse", "Predict",     "SeeThrough",
-    "Swap", "GetBottom", "Shuffle", "Extort",  "BombDisposal"};
+
 struct Player;
 struct MyTurn;
 struct NextTurn {};
 struct GameStart {};
 struct Game : public msm::front::state_machine_def<Player> {
     Game(std::vector<int> uids) {
-        std::map<CardType, int> Cards{
-            {Skip, SkipNum},
-            {Shirk, ShirkNum},
-            {Reverse, ReverseNum},
-            {Predict, PredictNum},
-            {SeeThrough, SeeThroughNum},
-            {Swap, SwapNum},
-            {GetBottom, GetBottomNum},
-            {Shuffle, ShuffleNum},
-            {Extort, ExtortNum},
-            {BombDisposal, BombDisposal - BombNum - 1}};
-
-        for (auto it : Cards) {
-            for (int i = 0; i < it.second; ++i)
-                mCardPool.emplace_back(it.first);
+        auto cardsVecs = mCardPool.InitializePlayerCards();
+        for (int i = 0; i < uids.size(); ++i) {
+            mPlayers.emplace_back(uids[i], cardsVecs[i], *this);
         }
-        random_shuffle(mCardPool.begin(), mCardPool.end());
-        for (auto uid : uids) {
-            std::vector<CardType> tmpvec(
-                mCardPool.begin(), mCardPool.begin() + InitialCardsNum - 1);
-            tmpvec.push_back(BombDisposal);
-
-            mCardPool.erase(mCardPool.begin(),
-                            mCardPool.begin() + InitialCardsNum - 1);
-            mPlayers.emplace_back(uid, tmpvec, *this);
-        }
-        for (int i = 0; i < BombNum; ++i) {
-            mCardPool.push_back(Bomb);
-        }
-        random_shuffle(mCardPool.begin(), mCardPool.end());
     }
 
     // entry and exit of state: log
@@ -139,14 +89,7 @@ struct Game : public msm::front::state_machine_def<Player> {
     std::list<Player> mDiedPlayers;
     bool mClockwise{true};
     std::list<Player>::iterator PlayingPlayer;
-    std::vector<CardType> mCardPool;
-    void PrintCardPoool() {
-        std::cout << "Game Card Pool\n";
-        for (auto it : mCardPool) {
-            std::cout << CardNames[it] << " ";
-        }
-        std::cout << std::endl;
-    }
+    CardPool mCardPool;
 };
 
 // events
@@ -295,8 +238,7 @@ struct Player : public msm::front::state_machine_def<Player> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            random_shuffle(fsm.mGame.mCardPool.begin(),
-                           fsm.mGame.mCardPool.end());
+            fsm.mGame.mCardPool.ShuffleCards();
         }
     };
 

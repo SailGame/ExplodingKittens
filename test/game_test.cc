@@ -10,7 +10,7 @@
 namespace Test {
 class ContainerFixture : public ::testing::Test {
    public:
-    ContainerFixture() : mGame({1, 2, 3, 4, 5, 6}) {}
+    ContainerFixture() : mGame({1, 2, 3, 4, 5}) {}
     Game mGame;
     void SetUp() {
         // code here will execute just before the test ensues
