@@ -182,9 +182,4 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     Game& mGame;
 };
 
-bool IsPlayerDied(const Player& player) {
-    return player.get_state_by_id(*player.current_state()) ==
-           player.get_state<Player_::Died*>();
-}
-
 }  // namespace ExplodingKittens

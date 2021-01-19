@@ -1,4 +1,4 @@
-#include "lib/game.hpp"
+#include "game.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
