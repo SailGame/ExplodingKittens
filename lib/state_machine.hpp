@@ -1,3 +1,4 @@
+#pragma once
 #include <algorithm>
 #include <boost/mpl/vector.hpp>
 #include <boost/msm/back/state_machine.hpp>
@@ -17,18 +18,19 @@ namespace msm = boost::msm;
 using namespace msm::front;
 using namespace msm::front::euml;
 
-struct Player;
+
 struct MyTurn;
 struct NextTurn {};
-struct GameStart {};
-struct Game : public msm::front::state_machine_def<Player> {
-    Game(std::vector<int> uids) {
-        auto cardsVecs = mCardPool.InitializePlayerCards();
-        for (int i = 0; i < uids.size(); ++i) {
-            mPlayers.emplace_back(uids[i], cardsVecs[i], *this);
-        }
-    }
-
+struct GameStart {
+    std::vector<int> Uids;
+    CardPool mCardPool;
+    GameStart(std::vector<int> uids, CardPool mCardPool): Uids(uids), mCardPool(mCardPool){}
+};
+struct Game_;
+typedef msm::back::state_machine<Game_> Game;
+struct Player_;
+typedef msm::back::state_machine<Player_> Player;
+struct Game_ : public msm::front::state_machine_def<Game_> {
     // entry and exit of state: log
     template <class Event, class FSM>
     void on_entry(Event const&, FSM&) {
@@ -39,18 +41,23 @@ struct Game : public msm::front::state_machine_def<Player> {
         std::cout << "leaving: Player" << std::endl;
     }
 
-    struct Prepared : public msm::front::state<> {};
+    struct Preparing : public msm::front::state<> {};
 
     struct Playing : public msm::front::state<> {};
 
     struct Ended : public msm::front::state<> {};
 
     // the initial state of the player SM. Must be defined
-    typedef Prepared initial_state;
+    typedef Preparing initial_state;
     // transition actions
     struct FirstPlayer {
         template <class EVT, class FSM, class SourceState, class TargetState>
         void operator()(EVT const& evt, FSM& fsm, SourceState&, TargetState&) {
+            auto cardsVecs = fsm.mCardPool.InitializePlayerCards();
+            for (int i = 0; i < evt.Uids.size(); ++i) {
+                fsm.mPlayers.emplace_back(evt.Uids[i], cardsVecs[i], *this);
+            }
+            fsm.mCardPool = evt.mCardPool;
             fsm.PlayingPlayer = fsm.mPlayers.begin();
             fsm.PlayingPlayer->process_event(MyTurn());
         }
@@ -79,7 +86,7 @@ struct Game : public msm::front::state_machine_def<Player> {
               //    Start     Event         Next      Action Guard
               //  +---------+------------------+---------+---------------------------+----------------------+
               // stopped phase
-              Row<Prepared, GameStart, Playing, FirstPlayer, none>,
+              Row<Preparing, GameStart, Playing, FirstPlayer, none>,
               Row<Playing, NextTurn, Playing, none, none>,
               Row<Playing, NextTurn, Ended, none, OnlyOnePlayerLeft>
               //  +---------+-------------+---------+---------------------------+----------------------+
@@ -146,8 +153,8 @@ struct ExtortCardSelected {
     CardType Card{Bomb};
 };
 
-struct Player : public msm::front::state_machine_def<Player> {
-    Player(int uid, std::vector<CardType> cards, Game& game)
+struct Player_ : public msm::front::state_machine_def<Player_> {
+    Player_(int uid, std::vector<CardType> cards, Game& game)
         : mUid(uid), mCards(cards), mGame(game) {}
 
     // entry and exit of state: log

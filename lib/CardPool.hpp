@@ -1,3 +1,4 @@
+#pragma once
 #include <algorithm>
 #include <iostream>
 #include <list>
@@ -31,16 +32,8 @@ enum CardType {
 static std::vector<std::string> CardNames = {
     "Bomb", "Skip",      "Shirk",   "Reverse", "Predict",     "SeeThrough",
     "Swap", "GetBottom", "Shuffle", "Extort",  "BombDisposal"};
-class ICardPool {
-public: 
-    virtual void PutBackBomb(int pos) = 0;
-    virtual CardType DrawCard() = 0;
-    virtual void ShuffleCards() = 0;
-    virtual std::vector<std::vector<CardType>> InitializePlayerCards() = 0;
-    virtual void PrintCardPool() = 0;
-};
 
-class CardPool : public ICardPool {
+class CardPool {
    public:
     CardPool() {}
     ~CardPool() {}
@@ -88,7 +81,7 @@ class CardPool : public ICardPool {
         random_shuffle(mCards.begin(), mCards.end());
         return out;
     }
-    virtual void PrintCardPool() {
+    void PrintCardPool(){
         std::cout << "Game Card Pool\n";
         for (auto it : mCards) {
             std::cout << CardNames[it] << " ";

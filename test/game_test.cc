@@ -1,16 +1,19 @@
-// Copyright [2020] <DeeEll-X/Veiasai>"
+ #pragma once
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <sys/mount.h>
-
 #include <string>
 
 #include "state_machine.hpp"
+#include "mock.hpp"
+namespace mpl = boost::mpl;
+namespace msm = boost::msm;
+using namespace msm::front;
+using namespace msm::front::euml;
 
 namespace Test {
 class ContainerFixture : public ::testing::Test {
    public:
-    ContainerFixture() : mGame({1, 2, 3, 4, 5}) {}
+    MockCardPool mMockCardPool;
     Game mGame;
     void SetUp() {
         // code here will execute just before the test ensues
@@ -23,6 +26,9 @@ class ContainerFixture : public ::testing::Test {
 };
 
 TEST_F(ContainerFixture, CreateGame) {
+    EXPECT_CALL(mMockCardPool, InitializePlayerCards());
+    mGame.start();
+    mGame.process_event(GameStart({1,2,3,4,5},mMockCardPool));
     for (auto it : mGame.mPlayers) {
         it.PrintCards();
     }
