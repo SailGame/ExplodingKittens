@@ -1,8 +1,13 @@
 #include "game.hpp"
 namespace ExplodingKittens {
 static bool IsPlayerDied(const Player &player) {
-    return player.get_state_by_id(*player.current_state()) ==
-           player.get_state<Player_::Died *>();
+    std::cout<<"IsPlayerDied"<<std::endl;
+
+    int it = player.current_state()[0];
+    std::cout<<it<<std::endl;
+    std::cout<<"finished"<<std::endl;
+    return false;
+
 }
 
 Game::Game(const std::vector<int> &uids, ICardPool &cardPool)
