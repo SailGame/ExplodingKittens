@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "interface.hpp"
-namespace ExplodingKittens::Test{
+namespace ExplodingKittens::Test {
 class MockCardPool : public ICardPool {
    public:
     MOCK_METHOD(void, PutBackBomb, (int pos), (override));
@@ -16,4 +16,4 @@ class MockCardPool : public ICardPool {
                 (override));
     MOCK_METHOD(void, PrintCardPool, (), (override));
 };
-}
+}  // namespace ExplodingKittens::Test

@@ -13,22 +13,20 @@ const std::map<CardType, int> CardMap{
     {Extort, ExtortNum},
     {BombDisposal, BombDisposal - BombNum - 1}};
 
-void CardPool::PutBackBomb(int pos)  {
+void CardPool::PutBackBomb(int pos) {
     if (pos == -1) {
         mCards.push_back(Bomb);
     } else {
         mCards.insert(mCards.begin(), pos - 1, Bomb);
     }
 }
-CardType CardPool::DrawCard()  {
+CardType CardPool::DrawCard() {
     auto card = mCards.front();
     mCards.erase(mCards.begin());
     return card;
 }
-void CardPool::ShuffleCards()  {
-    random_shuffle(mCards.begin(), mCards.end());
-}
-std::vector<std::vector<CardType>> CardPool::InitializePlayerCards()  {
+void CardPool::ShuffleCards() { random_shuffle(mCards.begin(), mCards.end()); }
+std::vector<std::vector<CardType>> CardPool::InitializePlayerCards() {
     for (auto it : CardMap) {
         for (int i = 0; i < it.second; ++i) mCards.emplace_back(it.first);
     }

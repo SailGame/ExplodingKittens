@@ -17,4 +17,4 @@ enum CardType {
 };
 
 std::string CardTypeToString(CardType card);
-}
+}  // namespace ExplodingKittens

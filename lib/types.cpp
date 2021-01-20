@@ -34,4 +34,4 @@ std::string CardTypeToString(CardType card) {
     }
     throw std::runtime_error("card type not exist!");
 }
-}
+}  // namespace ExplodingKittens

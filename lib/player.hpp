@@ -1,4 +1,6 @@
 #pragma once
+#include "card_pool.hpp"
+
 #include <algorithm>
 #include <boost/mpl/vector.hpp>
 #include <boost/msm/back/state_machine.hpp>
@@ -10,8 +12,6 @@
 #include <list>
 #include <map>
 #include <vector>
-
-#include "card_pool.hpp"
 
 namespace mpl = boost::mpl;
 namespace msm = boost::msm;
@@ -62,7 +62,7 @@ struct SelectExtortCard {
     int TargetUid{0};
 };
 struct GetExtortCard {};
-struct MyTurn {};
+struct EventMyTurn {};
 
 struct DrawCard {
     CardType Card{Bomb};
@@ -78,15 +78,15 @@ struct ExtortCardSelected {
 };
 
 struct Player_ : public msm::front::state_machine_def<Player_> {
-    Player_(int uid, Game& game) : mUid(uid), mGame(game) {}
+    Player_(int uid, Game &game) : mUid(uid), mGame(game) {}
 
     // entry and exit of state: log
     template <class Event, class FSM>
-    void on_entry(Event const&, FSM&) {
+    void on_entry(Event const &, FSM &) {
         std::cout << "entering: Player" << std::endl;
     }
     template <class Event, class FSM>
-    void on_exit(Event const&, FSM&) {
+    void on_exit(Event const &, FSM &) {
         std::cout << "leaving: Player" << std::endl;
     }
 
@@ -98,7 +98,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct Playing : public msm::front::state<> {};
 
     struct Extorted : public msm::front::state<> {
-        int ExtortSrcId{0};
+        int ExtortSrcUId{0};
     };
 
     struct Died : public msm::front::state<> {};
@@ -108,33 +108,145 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
 
 // transition actions
 // you can reuse them in another machine if you wish
-#define action(name)                                                           \
-    struct name {                                                              \
-        template <class EVT, class FSM, class SourceState, class TargetState>  \
-        void operator()(EVT const& evt, FSM& fsm, SourceState&, TargetState&); \
+#define action                                                            \
+    template <class EVT, class FSM, class SourceState, class TargetState> \
+    void operator()(EVT const &evt, FSM &fsm, SourceState &sstate,        \
+                    TargetState &tstate)
+
+    struct RoundStart {
+        action {
+            // TODO: tell user round start
+        }
     };
-    action(EndOfTurn) action(Reverse) action(SeeThrough) action(Predict)
-        action(Swap) action(Shuffle) action(HandleExploding) action(StoreCard)
-            action(SelectExtortTarget) action(AskExtortCard)
-                action(ExtortCardSelected)
+    struct EndOfTurn {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            fsm.mGame.NextPlayer();
+            // TODO: tell user end of the turn
+        }
+    };
+    struct Reverse {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            fsm.mGame.mClockwise = !fsm.mGame.mClockwise;
+            fsm.mGame.NextPlayer();
+            // TODO: tell user end of the turn
+        }
+    };
+    struct SeeThrough {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            // TODO: tell user the first three cards
+        }
+    };
+    struct Predict {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            // TODO: tell user the pos of the first bomb
+        }
+    };
+    struct Swap {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            for (auto player : fsm.mGame.mPlayers) {
+                if (player.mUid == evt.TargetUid)
+                    swap(fsm.mCards, player.mCards);
+                // TODO: tell two user current cards
+            }
+        }
+    };
+    struct Shuffle {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            fsm.mGame.mCardPool.ShuffleCards();
+        }
+    };
+    struct HandleExploding {
+        action {
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
+            // TODO: ask user where to put bomb
+            // handle user respond;
+        }
+    };
+    struct StoreCard {
+        action { fsm.mCards.push_back(evt.Card); }
+    };
+    struct SelectExtortTarget {
+        action {
+            for (auto player : fsm.mGame.mPlayers) {
+                if (player.mUid == evt.TargetUid)
+                    player.process_on(AskExtortCard(fsm.mUid));
+            }
+        }
+    };
+    struct AskExtortCard {
+        action {
+            tstate.ExtortSrcUId = evt.ExtortSrcUid;
+            // TODO: ask user to give an card
+        }
+    };
+    struct ExtortCardSelected {
+        action {
+            for (auto player : fsm.mGame.mPlayers) {
+                if (player.mUid == sstate.ExtortSrcUid) {
+                    player.process_event(GetExtortCard(evt.Card));
+                }
+            }
+        }
+    };
 #undef action
 
-#define guard(name)                                                            \
-    struct name {                                                              \
-        template <class EVT, class FSM, class SourceState, class TargetState>  \
-        bool operator()(EVT const& evt, FSM& fsm, SourceState&, TargetState&); \
+#define guard                                                             \
+    template <class EVT, class FSM, class SourceState, class TargetState> \
+    bool operator()(EVT const &evt, FSM &fsm, SourceState &sstate,        \
+                    TargetState &tstate)
+
+    // guard conditions
+    struct DoesCardExist {
+        guard {
+            return std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card) !=
+                   fsm.mCards.end();
+        }
     };
-        // guard conditions
-        guard(DoesCardExist) guard(IsShirkTarget) guard(IsBomb)
-            guard(IsExtortTarget) guard(IsTargetAlive)
+    struct IsShirkTarget {
+        guard { return evt.TatgetUid == fsm.mUid; }
+    };
+    struct IsBomb {
+        guard { return evt.Card == Bomb; }
+    };
+    struct IsExtortTarget {
+        guard { return evt.TatgetUid == fsm.mUid; }
+    };
+    struct IsTargetAlive {
+        guard {
+            for (auto player : fsm.mGame.mPlayers) {
+                if (player.mUid == evt.TargetUid) return true;
+            }
+            return false;
+        }
+    };
 #undef guard
-        // Transition table for player
-        struct transition_table
+    // Transition table for player
+    struct transition_table
         : mpl::vector<
               //    Start     Event         Next      Action Guard
               //  +---------+------------------+---------+---------------------------+----------------------+
               // stopped phase
-              Row<Stopped, MyTurn, Playing, none, none>,
+              Row<Stopped, EventMyTurn, Playing, RoundStart, none>,
               Row<Stopped, GetExtortCard, Playing, none, none>,
               Row<Stopped, AskExtortCard, Extorted, AskExtortCard,
                   IsExtortTarget>,
@@ -167,8 +279,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
               Row<Exploding, PlayCardBombDisposal, Stopped, HandleExploding,
                   DoesCardExist>
               //  +---------+-------------+---------+---------------------------+----------------------+
-              > {
-    };
+              > {};
     int mUid{0};
     std::vector<CardType> mCards;
     void PrintCards() {
@@ -179,7 +290,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         }
         std::cout << std::endl;
     }
-    Game& mGame;
-};
+    Game &mGame;
+};  // namespace ExplodingKittens
 
 }  // namespace ExplodingKittens
