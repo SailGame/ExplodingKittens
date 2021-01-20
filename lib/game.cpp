@@ -1,18 +1,13 @@
 #include "game.hpp"
 namespace ExplodingKittens {
 static bool IsPlayerDied(const Player &player) {
-    std::cout<<"IsPlayerDied"<<std::endl;
-
-    int it = player.current_state()[0];
-    std::cout<<it<<std::endl;
-    std::cout<<"finished"<<std::endl;
-    return false;
+    return player.is_flag_active<Exploded>();
 
 }
 
 Game::Game(const std::vector<int> &uids, ICardPool &cardPool)
     : mCardPool(cardPool) {
-    for (auto it : uids) mPlayers.emplace_back(it, *this);
+    for (auto uid : uids) mPlayers.emplace_back(uid, boost::ref(*this));
 }
 
 void Game::GameStart() {
@@ -32,6 +27,7 @@ void Game::NextPlayer() {
         for (int i = 1; i < playerNum; ++i) {
             auto &player = mPlayers[(i + mPlayingPlayerPos) % playerNum];
             if (!IsPlayerDied(player)) {
+                mPlayingPlayerPos = (i + mPlayingPlayerPos) % playerNum;
                 player.process_event(EventMyTurn());
                 return;
             }
@@ -40,6 +36,7 @@ void Game::NextPlayer() {
         for (int i = playerNum - 1; i > 0; --i) {
             auto &player = mPlayers[(i + mPlayingPlayerPos) % playerNum];
             if (!IsPlayerDied(player)) {
+                mPlayingPlayerPos = (i + mPlayingPlayerPos) % playerNum;
                 player.process_event(EventMyTurn());
                 return;
             }

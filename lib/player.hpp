@@ -76,7 +76,8 @@ struct AskExtortCard {
 struct ExtortCardSelected {
   CardType Card{Bomb};
 };
-
+// flags
+struct Exploded {};
 struct Player_ : public msm::front::state_machine_def<Player_> {
   Player_(int uid, Game &game) : mUid(uid), mGame(game) {}
 
@@ -99,7 +100,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     int ExtortSrcUId{0};
   };
 
-  struct Died : public msm::front::state<> {};
+  struct Died : public msm::front::state<> {
+      typedef mpl::vector1<Exploded>      flag_list;
+  };
 
   // the initial state of the player SM. Must be defined
   typedef Stopped initial_state;
