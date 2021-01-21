@@ -2,7 +2,6 @@
 namespace ExplodingKittens {
 static bool IsPlayerDied(const Player &player) {
     return player.is_flag_active<Exploded>();
-
 }
 
 Game::Game(const std::vector<int> &uids, ICardPool &cardPool)

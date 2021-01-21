@@ -17,21 +17,13 @@ void CardPool::PutBackBomb(int pos) {
     if (pos == -1) {
         mCards.push_back(Bomb);
     } else {
-        mCards.insert(mCards.begin(), (pos-1)%mCards.size(), Bomb);
+        mCards.insert(mCards.begin(), (pos - 1) % mCards.size(), Bomb);
     }
 }
-CardType CardPool::Front() {
-    return mCards.front();
-}
-CardType CardPool::Back() {
-    return mCards.back();
-}
-void CardPool::PopFront() {
-    mCards.erase(mCards.begin());
-}
-void CardPool::PopBack() {
-    mCards.erase(mCards.end()-1);
-}
+CardType CardPool::Front() { return mCards.front(); }
+CardType CardPool::Back() { return mCards.back(); }
+void CardPool::PopFront() { mCards.erase(mCards.begin()); }
+void CardPool::PopBack() { mCards.erase(mCards.end() - 1); }
 void CardPool::ShuffleCards() { random_shuffle(mCards.begin(), mCards.end()); }
 std::vector<std::vector<CardType>> CardPool::InitializePlayerCards() {
     for (auto it : CardMap) {
