@@ -40,7 +40,7 @@ jobs:
     - name: Test Release
       working-directory: ${{runner.workspace}}/build/
       shell: bash
-      run: ctest -L ExplodingKittens
+      run: ctest -L ExplodingKittensTest
 
     - name: Create package
       id: package
