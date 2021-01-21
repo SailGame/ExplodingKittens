@@ -30,6 +30,7 @@ struct PlayCardSkip {
 struct PlayCardShirk {
   CardType Card{Shirk};
   int TargetUid{0};
+  PlayCardShirk(int targetUid):TargetUid(targetUid) {}
 };
 struct PlayCardReverse {
   CardType Card{Reverse};
@@ -43,6 +44,7 @@ struct PlayCardSeeThrough {
 struct PlayCardSwap {
   CardType Card{Swap};
   int TargetUid{0};
+  PlayCardSwap(int targetUid): TargetUid(targetUid) {}
 };
 struct PlayCardGetBottom {
   CardType Card{GetBottom};
@@ -56,6 +58,8 @@ struct PlayCardExtort {
 };
 struct PlayCardBombDisposal {
   CardType Card{BombDisposal};
+  int pos{1};
+  PlayCardBombDisposal(int pos): pos(pos){}
 };
 struct SelectExtortCard {
   int SrcUid{0};
@@ -64,9 +68,7 @@ struct SelectExtortCard {
 struct GetExtortCard {};
 struct EventMyTurn {};
 
-struct DrawCard {
-  CardType Card{Bomb};
-};
+struct DrawCard {};
 
 struct AskExtortCard {
   int ExtortSrcUid{0};
@@ -126,6 +128,27 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
       // TODO: tell user end of the turn
     }
   };
+  struct ShirkItself{
+    action {
+      auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+      fsm.mCards.erase(pos);
+      // TODO: tell user shirked
+      
+    }
+  };
+  struct ShirkOther{
+    action {
+      auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+      fsm.mCards.erase(pos);
+      for (int i=0;i<fsm.mGame.mPlayers.size();++i) {
+        if (fsm.mGame.mPlayers[i].mUid == evt.TargetUid){
+          fsm.mGame.mPlayingPlayerPos = i;
+          fsm.mGame.mPlayers[i].process_event(EventMyTurn());
+          // TODO: tell user shirked
+        }
+      }
+    }
+  };
   struct Reverse {
     action {
       auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
@@ -153,11 +176,29 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     action {
       auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
       fsm.mCards.erase(pos);
-      for (auto player : fsm.mGame.mPlayers) {
+      for (auto& player : fsm.mGame.mPlayers) {
         if (player.mUid == evt.TargetUid)
           swap(fsm.mCards, player.mCards);
         // TODO: tell two user current cards
       }
+    }
+  };
+  struct GetBottom {
+    action {
+      auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+      fsm.mCards.erase(pos);
+      fsm.mCards.push_back(fsm.mGame.mCardPool.Back());
+      fsm.mGame.mCardPool.PopBack();
+      // TODO: tell use current cards
+      fsm.mGame.NextPlayer();
+    }
+  };
+  struct GetBottomBomb{
+    action {
+      auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+      fsm.mCards.erase(pos);
+      fsm.mGame.mCardPool.PopBack();
+      // TODO: tell use get bottom bomb
     }
   };
   struct Shuffle {
@@ -171,16 +212,21 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     action {
       auto pos = std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
       fsm.mCards.erase(pos);
-      // TODO: ask user where to put bomb
-      // handle user respond;
+      fsm.mGame.mCardPool.PutBackBomb(evt.pos);
+      //TODO: limit the position
+      fsm.mGame.NextPlayer();
     }
   };
   struct StoreCard {
-    action { fsm.mCards.push_back(evt.Card); }
+    action { 
+      fsm.mCards.push_back(fsm.mGame.mCardPool.Front());
+      fsm.mGame.mCardPool.PopFront(); 
+      fsm.mGame.NextPlayer();
+    }
   };
   struct SelectExtortTarget {
     action {
-      for (auto player : fsm.mGame.mPlayers) {
+      for (auto& player : fsm.mGame.mPlayers) {
         if (player.mUid == evt.TargetUid)
           player.process_on(AskExtortCard(fsm.mUid));
       }
@@ -215,10 +261,13 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     }
   };
   struct IsShirkTarget {
-    guard { return evt.TatgetUid == fsm.mUid; }
+    guard { return evt.TargetUid == fsm.mUid; }
   };
-  struct IsBomb {
-    guard { return evt.Card == Bomb; }
+  struct IsFrontBomb {
+    guard { return fsm.mGame.mCardPool.Front() == Bomb; }
+  };
+  struct IsBackBomb {
+    guard { return fsm.mGame.mCardPool.Back() == Bomb; }
   };
   struct IsExtortTarget {
     guard { return evt.TatgetUid == fsm.mUid; }
@@ -232,6 +281,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
       return false;
     }
   };
+
 #undef guard
   // Transition table for player
   struct transition_table
@@ -245,8 +295,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 IsExtortTarget>,
             // playing card phase
             Row<Playing, PlayCardSkip, Stopped, EndOfTurn, DoesCardExist>,
-            Row<Playing, PlayCardShirk, Stopped, EndOfTurn, DoesCardExist>,
-            Row<Playing, PlayCardShirk, Playing, none,
+            Row<Playing, PlayCardShirk, Stopped, ShirkOther, DoesCardExist>,
+            Row<Playing, PlayCardShirk, Playing, ShirkItself,
                 And_<IsShirkTarget, DoesCardExist>>,
             Row<Playing, PlayCardReverse, Stopped, Reverse, DoesCardExist>,
             Row<Playing, PlayCardSeeThrough, Playing, SeeThrough,
@@ -258,12 +308,12 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             // extort
             Row<Playing, PlayCardExtort, Stopped, SelectExtortTarget,
                 And_<DoesCardExist, IsTargetAlive>>,
-            Row<Playing, PlayCardGetBottom, Stopped, none, DoesCardExist>,
-            Row<Playing, PlayCardGetBottom, Exploding, HandleExploding,
-                DoesCardExist>,
+            Row<Playing, PlayCardGetBottom, Stopped, GetBottom, DoesCardExist>,
+            Row<Playing, PlayCardGetBottom, Exploding, GetBottomBomb,
+                And_<DoesCardExist,IsBackBomb>>,
             // draw card phase
             Row<Playing, DrawCard, Stopped, StoreCard, none>,
-            Row<Playing, DrawCard, Exploding, none, IsBomb>,
+            Row<Playing, DrawCard, Exploding, none, IsFrontBomb>,
             // extorted phase
             Row<Extorted, ExtortCardSelected, Stopped, ExtortCardSelected,
                 DoesCardExist>,
@@ -273,6 +323,13 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 DoesCardExist>
             //  +---------+-------------+---------+---------------------------+----------------------+
             > {};
+  // Replaces the default no-transition response.
+  template <class FSM,class Event>
+  void no_transition(Event const& e, FSM&,int state)
+  {
+      std::cout << "no transition from state " << state
+          << " on event " << typeid(e).name() << std::endl;
+  }
   int mUid{0};
   std::vector<CardType> mCards;
   void PrintCards() {

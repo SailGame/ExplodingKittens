@@ -26,7 +26,10 @@ class CardPool : public ICardPool {
     CardPool() {}
     ~CardPool() {}
     virtual void PutBackBomb(int pos) override;
-    virtual CardType DrawCard() override;
+    virtual CardType Front() override;
+    virtual CardType Back() override;
+    virtual void PopFront() override;
+    virtual void PopBack() override;
     virtual void ShuffleCards() override;
     virtual std::vector<std::vector<CardType>> InitializePlayerCards() override;
     virtual void PrintCardPool() override;
