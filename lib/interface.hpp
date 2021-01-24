@@ -4,6 +4,11 @@
 #include "types.hpp"
 namespace ExplodingKittens {
 
+class IProvider {
+    public:
+    virtual void SendStartGame(int uid, const std::vector<CardType>&) = 0;
+};
+
 class ICardPool {
    public:
     virtual void PutBackBomb(int pos) = 0;

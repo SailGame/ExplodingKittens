@@ -4,8 +4,8 @@ static bool IsPlayerDied(const Player &player) {
     return player.is_flag_active<Exploded>();
 }
 
-Game::Game(const std::vector<int> &uids, ICardPool &cardPool)
-    : mCardPool(cardPool) {
+Game::Game(const std::vector<int> &uids, IProvider& provider, ICardPool &cardPool)
+    : mProvider(provider), mCardPool(cardPool) {
     for (auto uid : uids) mPlayers.emplace_back(uid, boost::ref(*this));
 }
 
