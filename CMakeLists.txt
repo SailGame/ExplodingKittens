@@ -18,7 +18,6 @@ add_executable(ExplodingKittens main.cc)
 target_link_libraries(ExplodingKittens ${Boost_LIBRARIES})
 
 
-
 include(cmake/grpc.cmake)
 include(cmake/utils.cmake)
  

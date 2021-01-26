@@ -17,5 +17,4 @@ class Game {
     IProvider* mProvider{nullptr};
     ICardPool* mCardPool{nullptr};
 };
-
 }  // namespace ExplodingKittens
