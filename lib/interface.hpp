@@ -5,9 +5,12 @@
 namespace ExplodingKittens {
 
 class IProvider {
-    public:
-    virtual void SendStartGame(int roomid, int uid, const std::vector<CardType>&, const std::vector<int>&) = 0;
-    virtual void SendRoundStart(int roomid, int uid, const std::vector<int>&) = 0;
+   public:
+    virtual void SendStartGame(int roomid, int uid,
+                               const std::vector<CardType>&,
+                               const std::vector<int>&) = 0;
+    virtual void SendRoundStart(int roomid, int uid,
+                                const std::vector<int>&) = 0;
 };
 
 class ICardPool {

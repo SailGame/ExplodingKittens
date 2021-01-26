@@ -4,8 +4,9 @@ static bool IsPlayerDied(const Player &player) {
     return player.is_flag_active<Exploded>();
 }
 
-Game::Game(int roomid, const std::vector<int> &uids, IProvider* provider, ICardPool* cardPool)
-    : mRoomId(roomid),mUids(uids),mProvider(provider), mCardPool(cardPool) {
+Game::Game(int roomid, const std::vector<int> &uids, IProvider *provider,
+           ICardPool *cardPool)
+    : mRoomId(roomid), mUids(uids), mProvider(provider), mCardPool(cardPool) {
     for (auto uid : uids) mPlayers.emplace_back(uid, boost::ref(*this));
 }
 
@@ -14,7 +15,8 @@ void Game::GameStart() {
     for (int i = 0; i < cardsVecs.size(); ++i) {
         mPlayers[i].mCards = cardsVecs[i];
         mPlayers[i].start();
-        mProvider->SendStartGame(mRoomId, mPlayers[i].mUid, mPlayers[i].mCards, mUids);
+        mProvider->SendStartGame(mRoomId, mPlayers[i].mUid, mPlayers[i].mCards,
+                                 mUids);
     }
     mPlayingPlayerPos = 0;
     mPlayers[mPlayingPlayerPos].process_event(EventMyTurn());

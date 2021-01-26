@@ -6,7 +6,8 @@ namespace ExplodingKittens {
 class Game {
    public:
     Game() {}
-    Game(int roomid, const std::vector<int> &uids, IProvider* provider, ICardPool* cardPool);
+    Game(int roomid, const std::vector<int>& uids, IProvider* provider,
+         ICardPool* cardPool);
     void GameStart();
     void NextPlayer();
     int mRoomId{0};

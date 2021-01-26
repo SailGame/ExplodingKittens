@@ -120,7 +120,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
 
     struct RoundStart {
         action {
-            fsm.mGame.mProvider->SendRoundStart(fsm.mGame.mRoomId, fsm.mUid, fsm.mGame.mUids);
+            fsm.mGame.mProvider->SendRoundStart(fsm.mGame.mRoomId, fsm.mUid,
+                                                fsm.mGame.mUids);
         }
     };
     struct EndOfTurn {
