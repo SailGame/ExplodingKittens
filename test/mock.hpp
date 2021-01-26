@@ -19,4 +19,11 @@ class MockCardPool : public ICardPool {
                 (override));
     MOCK_METHOD(void, PrintCardPool, (), (override));
 };
+
+class MockProvider : public IProvider {
+   public:
+    MOCK_METHOD(void, SendStartGame, (int roomid, int uid, const std::vector<CardType>&, const std::vector<int>&), (override));
+    MOCK_METHOD(void, SendRoundStart, (int roomid, int uid, const std::vector<int>&), (override));
+};
+
 }  // namespace ExplodingKittens::Test

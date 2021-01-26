@@ -120,7 +120,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
 
     struct RoundStart {
         action {
-            // TODO: tell user round start
+            fsm.mGame.mProvider->SendRoundStart(fsm.mGame.mRoomId, fsm.mUid, fsm.mGame.mUids);
         }
     };
     struct EndOfTurn {
@@ -197,8 +197,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            fsm.mCards.push_back(fsm.mGame.mCardPool.Back());
-            fsm.mGame.mCardPool.PopBack();
+            fsm.mCards.push_back(fsm.mGame.mCardPool->Back());
+            fsm.mGame.mCardPool->PopBack();
             // TODO: tell use current cards
             fsm.mGame.NextPlayer();
         }
@@ -208,7 +208,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            fsm.mGame.mCardPool.PopBack();
+            fsm.mGame.mCardPool->PopBack();
             // TODO: tell use get bottom bomb
         }
     };
@@ -217,7 +217,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            fsm.mGame.mCardPool.ShuffleCards();
+            fsm.mGame.mCardPool->ShuffleCards();
         }
     };
     struct HandleExploding {
@@ -225,15 +225,15 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            fsm.mGame.mCardPool.PutBackBomb(evt.pos);
+            fsm.mGame.mCardPool->PutBackBomb(evt.pos);
             // TODO: limit the position
             fsm.mGame.NextPlayer();
         }
     };
     struct StoreCard {
         action {
-            fsm.mCards.push_back(fsm.mGame.mCardPool.Front());
-            fsm.mGame.mCardPool.PopFront();
+            fsm.mCards.push_back(fsm.mGame.mCardPool->Front());
+            fsm.mGame.mCardPool->PopFront();
             fsm.mGame.NextPlayer();
         }
     };
@@ -278,10 +278,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         guard { return evt.TargetUid == fsm.mUid; }
     };
     struct IsFrontBomb {
-        guard { return fsm.mGame.mCardPool.Front() == Bomb; }
+        guard { return fsm.mGame.mCardPool->Front() == Bomb; }
     };
     struct IsBackBomb {
-        guard { return fsm.mGame.mCardPool.Back() == Bomb; }
+        guard { return fsm.mGame.mCardPool->Back() == Bomb; }
     };
     struct IsExtortTarget {
         guard { return evt.TatgetUid == fsm.mUid; }

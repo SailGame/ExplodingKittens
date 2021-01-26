@@ -5,13 +5,17 @@ namespace ExplodingKittens {
 
 class Game {
    public:
-    Game(const std::vector<int> &uids, IProvider& provider, ICardPool &cardPool);
+    Game() {}
+    Game(int roomid, const std::vector<int> &uids, IProvider* provider, ICardPool* cardPool);
     void GameStart();
     void NextPlayer();
+    int mRoomId{0};
+    std::vector<int> mUids{};
     std::vector<Player> mPlayers;
     bool mClockwise{true};
     int mPlayingPlayerPos{0};
-    IProvider& mProvider;
-    ICardPool &mCardPool;
+    IProvider* mProvider{nullptr};
+    ICardPool* mCardPool{nullptr};
 };
+
 }  // namespace ExplodingKittens

@@ -13,6 +13,7 @@ using namespace msm::front;
 using namespace msm::front::euml;
 
 namespace ExplodingKittens::Test {
+int RoomId{1};
 const std::vector<int> Uids{1, 2, 3, 4, 5};
 const std::vector<std::vector<CardType>> InitializedPlayerCards{
     {BombDisposal, Skip, Swap, Reverse, Shuffle},
@@ -22,8 +23,8 @@ const std::vector<std::vector<CardType>> InitializedPlayerCards{
     {BombDisposal, Reverse, Shirk, SeeThrough, BombDisposal}};
 class ContainerFixture : public ::testing::Test {
    public:
-    ContainerFixture() : mGame(Uids, mMockCardPool) {}
-
+    ContainerFixture() : mGame(RoomId, Uids, &mMockProvider, &mMockCardPool) {}
+    MockProvider mMockProvider;
     MockCardPool mMockCardPool;
     Game mGame;
     void SetUp() {

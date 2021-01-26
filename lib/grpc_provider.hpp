@@ -2,13 +2,16 @@
 
 #include <core/core.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
+#include <explodingkittens/explodingkittens.pb.h>
+#include "interface.hpp"
 #include "game.hpp"
 
 namespace ExplodingKittens {
 
 struct GameAndCardPool{
-  explicit GameAndCardPool(const std::vector<int> &uids): CardPool(), Game(uids, mCardPool){}
-  CardPool mCardPool;
+  GameAndCardPool() {}
+  explicit GameAndCardPool(int roomid, const std::vector<int> &uids, IProvider* provider): mCardPool(new CardPool()), mGame(roomid, uids, provider,mCardPool){}
+  CardPool* mCardPool{nullptr};
   Game mGame;
 };
 
@@ -17,9 +20,12 @@ public:
     Provider(std::shared_ptr<grpc::Channel> channel)
       : mStub(Core::GameCore::NewStub(channel)),mId("ExplodingKittens") {}
     void Start();
+    virtual void SendStartGame(int roomid, int uid, const std::vector<CardType>&, const std::vector<int>&) override;
+    virtual void SendRoundStart(int roomid, int uid, const std::vector<int>&) override;
+    
  private:
   void Register();
-  void HandleUserMsg(int,int,const google::protobuf::Any&);
+  void HandleUserMsg(int roomid,int uid,const ExplodingKittensProto::UserOperation&);
   std::unique_ptr<Core::GameCore::Stub> mStub;
    grpc::ClientContext mContext;
    std::unique_ptr<grpc::ClientReaderWriter<Core::ProviderMsg, Core::ProviderMsg>> mStream;
