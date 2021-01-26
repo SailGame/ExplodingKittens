@@ -5,23 +5,9 @@ using Core::ProviderMsg;
 using ExplodingKittensProto::Skip;
 using ExplodingKittensProto::UserOperation;
 
-#define TransitionFor(MsgT) \
-    template <>             \
-    template <>             \
-    void Provider::Transition<MsgT>(const MsgT& msg)
-
-TransitionFor(ExplodingKittensProto::Skip);
-TransitionFor(ExplodingKittensProto::Shirk);
-TransitionFor(ExplodingKittensProto::Reverse);
-TransitionFor(ExplodingKittensProto::Predict);
-TransitionFor(ExplodingKittensProto::SeeThrough);
-TransitionFor(ExplodingKittensProto::SwapCards);
-TransitionFor(ExplodingKittensProto::GetBottom);
-TransitionFor(ExplodingKittensProto::Shuffle);
-TransitionFor(ExplodingKittensProto::Extort);
-TransitionFor(ExplodingKittensProto::ExtortedRespond);
-TransitionFor(ExplodingKittensProto::BombDisposal);
-TransitionFor(ExplodingKittensProto::DrawCard);
+static CardType ProtoCardTypeToCardType(ExplodingKittensProto::CardType card) {
+    return CardType(int(card));
+}
 
 void Provider::Start() {
     mStream = mStub->Provider(&mContext);
@@ -122,43 +108,144 @@ void Provider::HandleUserMsg(int roomid, int uid,
         if (player.mUid == uid) {
             switch (msg.Operation_case()) {
                 case UserOperation::kSkip:
-                    return Transition<ExplodingKittensProto::Skip>(msg.skip());
+                    return Transition<ExplodingKittensProto::Skip>(game, player,
+                                                                   msg.skip());
                 case UserOperation::kShirk:
                     return Transition<ExplodingKittensProto::Shirk>(
-                        msg.shirk());
+                        game, player, msg.shirk());
                 case UserOperation::kReverse:
                     return Transition<ExplodingKittensProto::Reverse>(
-                        msg.reverse());
+                        game, player, msg.reverse());
                 case UserOperation::kPredict:
                     return Transition<ExplodingKittensProto::Predict>(
-                        msg.predict());
+                        game, player, msg.predict());
                 case UserOperation::kSeeThrough:
                     return Transition<ExplodingKittensProto::SeeThrough>(
-                        msg.seethrough());
+                        game, player, msg.seethrough());
                 case UserOperation::kSwapCards:
                     return Transition<ExplodingKittensProto::SwapCards>(
-                        msg.swapcards());
+                        game, player, msg.swapcards());
                 case UserOperation::kGetBottom:
                     return Transition<ExplodingKittensProto::GetBottom>(
-                        msg.getbottom());
+                        game, player, msg.getbottom());
                 case UserOperation::kShuffle:
                     return Transition<ExplodingKittensProto::Shuffle>(
-                        msg.shuffle());
+                        game, player, msg.shuffle());
                 case UserOperation::kExtort:
                     return Transition<ExplodingKittensProto::Extort>(
-                        msg.extort());
+                        game, player, msg.extort());
                 case UserOperation::kExtortedRespond:
                     return Transition<ExplodingKittensProto::ExtortedRespond>(
-                        msg.extortedrespond());
+                        game, player, msg.extortedrespond());
                 case UserOperation::kBombDisposal:
                     return Transition<ExplodingKittensProto::BombDisposal>(
-                        msg.bombdisposal());
+                        game, player, msg.bombdisposal());
                 case UserOperation::kDrawCard:
                     return Transition<ExplodingKittensProto::DrawCard>(
-                        msg.drawcard());
+                        game, player, msg.drawcard());
             }
         }
     }
 }
+
+void Provider::SendCardOperationRespond(int roomid, int uid,
+                                        ExplodingKittensProto::CardType card,
+                                        const std::vector<int>& uids,
+                                        int targetuid) {
+    Core::ProviderMsg respondMsg;
+    auto* respondArgs = respondMsg.mutable_notifymsgargs();
+    respondArgs->set_roomid(roomid);
+    ExplodingKittensProto::NotifyMsg notifyOperRespondMsg;
+
+    ExplodingKittensProto::CardOperation* cardOperation =
+        notifyOperRespondMsg.mutable_cardoperation();
+    cardOperation->set_userid(uid);
+    cardOperation->set_card(card);
+    cardOperation->set_targetuid(targetuid);
+
+    for (auto id : uids) {
+        respondArgs->set_userid(id);
+        respondArgs->mutable_custom()->PackFrom(notifyOperRespondMsg);
+
+        mStream->Write(respondMsg);
+    }
+}
+#define TransitionFor(MsgT)                                     \
+    void Provider::Transition##MsgT(Game& game, Player& player, \
+                                    const ExplodingKittensProto::MsgT& msg)
+
+TransitionFor(Skip) { player.process_event(PlayCardSkip()); }
+
+TransitionFor(Shirk) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::SHIRK, game.mUids,
+                             msg.targetuid());
+    player.process_event(PlayCardShirk(msg.targetuid()));
+}
+
+TransitionFor(Reverse) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::REVERSE, game.mUids);
+    player.process_event(PlayCardReverse());
+}
+
+TransitionFor(Predict) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::PREDICT, game.mUids);
+    player.process_event(PlayCardPredict());
+}
+
+TransitionFor(SeeThrough) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::SEE_THROUGH, game.mUids);
+    player.process_event(PlayCardSeeThrough());
+}
+
+TransitionFor(SwapCards) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::SWAPCARDS, game.mUids,
+                             msg.targetuid());
+    player.process_event(PlayCardSwap(msg.targetuid()));
+}
+
+TransitionFor(GetBottom) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::GET_BOTTOM, game.mUids);
+    player.process_event(PlayCardGetBottom());
+}
+
+TransitionFor(Shuffle) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::SHUFFLE, game.mUids);
+    player.process_event(PlayCardShuffle());
+}
+
+TransitionFor(Extort) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::EXTORT, game.mUids,
+                             msg.targetuid());
+    player.process_event(PlayCardExtort(msg.targetuid()));
+}
+
+TransitionFor(ExtortedRespond) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::EXTORT,
+                             game.mUids);  // targetuid = -1 means extorted
+    auto card = ProtoCardTypeToCardType(msg.card());
+    player.process_event(ExtortCardSelected(card));
+}
+
+TransitionFor(BombDisposal) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::BOMB_DISPOSAL, game.mUids);
+    player.process_event(PlayCardBombDisposal(msg.pos()));
+}
+
+TransitionFor(DrawCard) {
+    SendCardOperationRespond(game.mRoomId, player.mUid,
+                             ExplodingKittensProto::REVERSE, game.mUids);
+    player.process_event(DrawCard());
+}
+#undef TransitionFor
 
 }  // namespace ExplodingKittens

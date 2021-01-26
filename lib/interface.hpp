@@ -1,4 +1,6 @@
 #pragma once
+#include <explodingkittens/explodingkittens.pb.h>
+
 #include <vector>
 
 #include "types.hpp"
@@ -11,6 +13,10 @@ class IProvider {
                                const std::vector<int>&) = 0;
     virtual void SendRoundStart(int roomid, int uid,
                                 const std::vector<int>&) = 0;
+    virtual void SendCardOperationRespond(int roomid, int uid,
+                                          ExplodingKittensProto::CardType card,
+                                          const std::vector<int>& uids,
+                                          int targetuid = -1) = 0;
 };
 
 class ICardPool {

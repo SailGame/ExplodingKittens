@@ -28,15 +28,35 @@ class Provider : public IProvider {
                                const std::vector<int>&) override;
     virtual void SendRoundStart(int roomid, int uid,
                                 const std::vector<int>&) override;
+    virtual void SendCardOperationRespond(int roomid, int uid,
+                                          ExplodingKittensProto::CardType card,
+                                          const std::vector<int>& uids,
+                                          int targetuid = -1) override;
 
    private:
     void Register();
     void HandleUserMsg(int roomid, int uid,
                        const ExplodingKittensProto::UserOperation&);
     template <typename MsgT>
-    void Transition(const MsgT& event) {
+    void Transition(Game&, Player&, const MsgT& event) {
         throw std::runtime_error("Unsupported msg type");
     }
+#define TransitionFor(MsgT)                           \
+    void Transition##MsgT(Game& game, Player& player, \
+                          const ExplodingKittensProto::MsgT& msg)
+    TransitionFor(Skip);
+    TransitionFor(Shirk);
+    TransitionFor(Reverse);
+    TransitionFor(Predict);
+    TransitionFor(SeeThrough);
+    TransitionFor(SwapCards);
+    TransitionFor(GetBottom);
+    TransitionFor(Shuffle);
+    TransitionFor(Extort);
+    TransitionFor(ExtortedRespond);
+    TransitionFor(BombDisposal);
+    TransitionFor(DrawCard);
+#undef TransitionFor
     std::unique_ptr<Core::GameCore::Stub> mStub;
     grpc::ClientContext mContext;
     std::unique_ptr<

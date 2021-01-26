@@ -3,4 +3,4 @@
 	url = https://github.com/google/googletest.git
 [submodule "externals/proto"]
 	path = externals/proto
-	url = git@github.com:SailGame/proto.git
+	url = https://github.com/SailGame/proto.git

@@ -1,4 +1,6 @@
 #pragma once
+#include <explodingkittens/explodingkittens.pb.h>
+
 #include <algorithm>
 #include <boost/mpl/vector.hpp>
 #include <boost/msm/back/state_machine.hpp>
@@ -55,6 +57,7 @@ struct PlayCardShuffle {
 struct PlayCardExtort {
     CardType Card{Extort};
     int TargetUid{0};
+    PlayCardExtort(int targetUid) : TargetUid(targetUid) {}
 };
 struct PlayCardBombDisposal {
     CardType Card{BombDisposal};
@@ -77,6 +80,7 @@ struct AskExtortCard {
 
 struct ExtortCardSelected {
     CardType Card{Bomb};
+    ExtortCardSelected(CardType card) : Card(card) {}
 };
 // flags
 struct Exploded {};
@@ -126,6 +130,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct EndOfTurn {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SKIP,
+                fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -242,11 +249,11 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         action {
             for (auto &player : fsm.mGame.mPlayers) {
                 if (player.mUid == evt.TargetUid)
-                    player.process_on(AskExtortCard(fsm.mUid));
+                    player.process_event(AskExtortCard(fsm.mUid));
             }
         }
     };
-    struct AskExtortCard {
+    struct AskExtortCard_A {
         action {
             tstate.ExtortSrcUId = evt.ExtortSrcUid;
             // TODO: ask user to give an card
@@ -285,7 +292,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         guard { return fsm.mGame.mCardPool->Back() == Bomb; }
     };
     struct IsExtortTarget {
-        guard { return evt.TatgetUid == fsm.mUid; }
+        guard { return evt.ExtortSrcUid == fsm.mUid; }
     };
     struct IsTargetAlive {
         guard {
@@ -305,7 +312,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
               // stopped phase
               Row<Stopped, EventMyTurn, Playing, RoundStart, none>,
               Row<Stopped, GetExtortCard, Playing, none, none>,
-              Row<Stopped, AskExtortCard, Extorted, AskExtortCard,
+              Row<Stopped, AskExtortCard, Extorted, AskExtortCard_A,
                   IsExtortTarget>,
               // playing card phase
               Row<Playing, PlayCardSkip, Stopped, EndOfTurn, DoesCardExist>,
