@@ -172,6 +172,26 @@ void Provider::SendCardOperationRespond(int roomid, int uid,
         mStream->Write(respondMsg);
     }
 }
+
+void Provider::SendSwapResult(int roomid, int uid,
+                              const std::vector<CardType>& cards) {
+    Core::ProviderMsg swapRetMsg;
+    auto* swapRetArgs = swapRetMsg.mutable_notifymsgargs();
+    swapRetArgs->set_roomid(roomid);
+    swapRetArgs->set_userid(uid);
+    ExplodingKittensProto::NotifyMsg notifySwapRetMsg;
+
+    ExplodingKittensProto::SwapResult* swapResult =
+        notifySwapRetMsg.mutable_swapresult();
+    *(swapResult->mutable_cards()) =
+        google::protobuf::RepeatedField<google::protobuf::int32>(cards.begin(),
+                                                                 cards.end());
+
+    swapRetArgs->mutable_custom()->PackFrom(notifySwapRetMsg);
+
+    mStream->Write(swapRetMsg);
+}
+
 #define TransitionFor(MsgT)                                     \
     void Provider::Transition##MsgT(Game& game, Player& player, \
                                     const ExplodingKittensProto::MsgT& msg)

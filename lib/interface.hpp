@@ -17,6 +17,8 @@ class IProvider {
                                           ExplodingKittensProto::CardType card,
                                           const std::vector<int>& uids,
                                           int targetuid = -1) = 0;
+    virtual void SendSwapResult(int roomid, int uid,
+                                const std::vector<CardType>&) = 0;
 };
 
 class ICardPool {

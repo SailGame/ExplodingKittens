@@ -32,6 +32,9 @@ class MockProvider : public IProvider {
                 (int roomid, int uid, ExplodingKittensProto::CardType card,
                  const std::vector<int>& uids, int targetuid),
                 (override));
+    MOCK_METHOD(void, SendSwapResult,
+                (int roomid, int uid, const std::vector<CardType>&),
+                (override));
 };
 
 }  // namespace ExplodingKittens::Test
