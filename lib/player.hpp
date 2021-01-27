@@ -142,6 +142,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct ShirkItself {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHIRK,
+                fsm.mGame.mUids, fsm.mUid);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -150,6 +153,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct ShirkOther {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHIRK,
+                fsm.mGame.mUids, evt.TargetUid);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -164,6 +170,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct Reverse {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::REVERSE,
+                fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -174,6 +183,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct SeeThrough {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SEE_THROUGH,
+                fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -182,6 +194,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct Predict {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::PREDICT,
+                fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -190,6 +205,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct Swap {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SWAPCARDS,
+                fsm.mGame.mUids, evt.TargetUid);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -202,6 +220,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct GetBottom {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::GET_BOTTOM,
+                fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -222,6 +243,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct Shuffle {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHUFFLE,
+                fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -230,6 +254,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct HandleExploding {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid,
+                ExplodingKittensProto::BOMB_DISPOSAL, fsm.mGame.mUids);
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
@@ -240,6 +267,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct StoreCard {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::NONE,
+                fsm.mGame.mUids);
             fsm.mCards.push_back(fsm.mGame.mCardPool->Front());
             fsm.mGame.mCardPool->PopFront();
             fsm.mGame.NextPlayer();
@@ -247,6 +277,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct SelectExtortTarget {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::EXTORT,
+                fsm.mGame.mUids, evt.TargetUid);
             for (auto &player : fsm.mGame.mPlayers) {
                 if (player.mUid == evt.TargetUid)
                     player.process_event(AskExtortCard(fsm.mUid));
@@ -261,6 +294,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct ExtortCardSelected {
         action {
+            fsm.mGame.mProvider->SendCardOperationRespond(
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::EXTORT,
+                fsm.mUid);  // targetuid = -1 means extorted
             for (auto player : fsm.mGame.mPlayers) {
                 if (player.mUid == sstate.ExtortSrcUid) {
                     player.process_event(GetExtortCard(evt.Card));

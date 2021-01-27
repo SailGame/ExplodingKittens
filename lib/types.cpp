@@ -2,6 +2,8 @@
 namespace ExplodingKittens {
 std::string CardTypeToString(CardType card) {
     switch (card) {
+        case None:
+            return "None";
         case Bomb:
             return "Bomb";
         case Shirk:
