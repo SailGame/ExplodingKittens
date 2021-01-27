@@ -196,6 +196,25 @@ void Provider::SendSwapResult(int roomid, int uid,
     mStream->Write(swapRetMsg);
 }
 
+void Provider::SendExtortResult(int roomid, int uid, CardType card, int srcid,
+                                int dstid) {
+    Core::ProviderMsg extortRetMsg;
+    auto* extortRetArgs = extortRetMsg.mutable_notifymsgargs();
+    extortRetArgs->set_roomid(roomid);
+    extortRetArgs->set_userid(uid);
+    ExplodingKittensProto::NotifyMsg notifyExtortRetMsg;
+
+    ExplodingKittensProto::ExtortResult* extortResult =
+        notifyExtortRetMsg.mutable_extortresult();
+    extortResult->set_card(CardTypeToProtoCardType(card));
+    extortResult->set_dstuid(dstid);
+    extortResult->set_srcuid(srcid);
+
+    extortRetArgs->mutable_custom()->PackFrom(notifyExtortRetMsg);
+
+    mStream->Write(extortRetMsg);
+}
+
 void Provider::SendDrawResult(int roomid, int uid, CardType card) {
     Core::ProviderMsg drawRetMsg;
     auto* drawRetArgs = drawRetMsg.mutable_notifymsgargs();

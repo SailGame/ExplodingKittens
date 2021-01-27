@@ -283,6 +283,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct SelectExtortTarget {
         action {
+            // if received, broadcast to every user: extort target
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::EXTORT,
                 fsm.mGame.mUids, evt.TargetUid);
@@ -293,18 +294,28 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         }
     };
     struct AskExtortCard_A {
+        action { tstate.ExtortSrcUId = evt.ExtortSrcUid; }
+    };
+    struct GetExtortCard_A {
         action {
-            tstate.ExtortSrcUId = evt.ExtortSrcUid;
-            // TODO: ask user to give an card
+            // src add extorted card
+            fsm.mCards.push_back(evt.card);
         }
     };
     struct ExtortCardSelected {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::EXTORT,
-                fsm.mUid);  // targetuid = -1 means extorted
+                fsm.mUid);  // targetuid = -1 means extorted, user gives a card
+            // dst erase extorted card
+            auto pos =
+                std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
+            fsm.mCards.erase(pos);
             for (auto player : fsm.mGame.mPlayers) {
                 if (player.mUid == sstate.ExtortSrcUid) {
+                    fsm.mGame.mProvider->SendExtortResult(
+                        fsm.mGame.mRoomId, sstate.ExtortSrcUid, evt.Card,
+                        sstate.ExtortSrcUid, fsm.mUid);
                     player.process_event(GetExtortCard(evt.Card));
                 }
             }
@@ -353,7 +364,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
               //  +---------+------------------+---------+---------------------------+----------------------+
               // stopped phase
               Row<Stopped, EventMyTurn, Playing, RoundStart, none>,
-              Row<Stopped, GetExtortCard, Playing, none, none>,
+              Row<Stopped, GetExtortCard, Playing, GetExtortCard_A, none>,
               Row<Stopped, AskExtortCard, Extorted, AskExtortCard_A,
                   IsExtortTarget>,
               // playing card phase

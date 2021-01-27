@@ -34,6 +34,8 @@ class Provider : public IProvider {
                                           int targetuid = -1) override;
     virtual void SendSwapResult(int roomid, int uid,
                                 const std::vector<CardType>&) override;
+    virtual void SendExtortResult(int roomid, int uid, CardType card, int srcid,
+                                  int dstid) override;
     virtual void SendDrawResult(int roomid, int uid, CardType card) override;
 
    private:

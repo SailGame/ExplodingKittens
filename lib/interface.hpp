@@ -19,6 +19,8 @@ class IProvider {
                                           int targetuid = -1) = 0;
     virtual void SendSwapResult(int roomid, int uid,
                                 const std::vector<CardType>&) = 0;
+    virtual void SendExtortResult(int roomid, int uid, CardType card, int srcid,
+                                  int dstid) = 0;
     virtual void SendDrawResult(int roomid, int uid, CardType card) = 0;
 };
 
