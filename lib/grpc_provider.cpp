@@ -9,6 +9,10 @@ static CardType ProtoCardTypeToCardType(ExplodingKittensProto::CardType card) {
     return CardType(int(card));
 }
 
+static ExplodingKittensProto::CardType CardTypeToProtoCardType(CardType card) {
+    return ExplodingKittensProto::CardType(int(card));
+}
+
 void Provider::Start() {
     mStream = mStub->Provider(&mContext);
     Register();
@@ -190,6 +194,22 @@ void Provider::SendSwapResult(int roomid, int uid,
     swapRetArgs->mutable_custom()->PackFrom(notifySwapRetMsg);
 
     mStream->Write(swapRetMsg);
+}
+
+void Provider::SendDrawResult(int roomid, int uid, CardType card) {
+    Core::ProviderMsg drawRetMsg;
+    auto* drawRetArgs = drawRetMsg.mutable_notifymsgargs();
+    drawRetArgs->set_roomid(roomid);
+    drawRetArgs->set_userid(uid);
+    ExplodingKittensProto::NotifyMsg notifyDrawRetMsg;
+
+    ExplodingKittensProto::DrawResult* drawResult =
+        notifyDrawRetMsg.mutable_drawresult();
+    drawResult->set_card(CardTypeToProtoCardType(card));
+
+    drawRetArgs->mutable_custom()->PackFrom(notifyDrawRetMsg);
+
+    mStream->Write(drawRetMsg);
 }
 
 #define TransitionFor(MsgT)                                     \

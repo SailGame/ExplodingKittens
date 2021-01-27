@@ -212,11 +212,13 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
             for (auto &player : fsm.mGame.mPlayers) {
-                if (player.mUid == evt.TargetUid){
+                if (player.mUid == evt.TargetUid) {
                     swap(fsm.mCards, player.mCards);
-                    fsm.mGame.mProvider->SendSwapResult(fsm.mGame.mRoomId, fsm.mUid, fsm.mCards);
-                    fsm.mGame.mProvider->SendSwapResult(fsm.mGame.mRoomId, player.mUid, player.mCards);
-                }     
+                    fsm.mGame.mProvider->SendSwapResult(fsm.mGame.mRoomId,
+                                                        fsm.mUid, fsm.mCards);
+                    fsm.mGame.mProvider->SendSwapResult(
+                        fsm.mGame.mRoomId, player.mUid, player.mCards);
+                }
             }
         }
     };
@@ -274,6 +276,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 fsm.mGame.mUids);
             fsm.mCards.push_back(fsm.mGame.mCardPool->Front());
             fsm.mGame.mCardPool->PopFront();
+            fsm.mGame.mProvider->SendDrawResult(fsm.mGame.mRoomId, fsm.mUid,
+                                                fsm.mCards.back());
             fsm.mGame.NextPlayer();
         }
     };
