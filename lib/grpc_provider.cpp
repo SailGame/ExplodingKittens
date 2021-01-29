@@ -213,6 +213,16 @@ void Provider::SendDrawResult(int roomid, int uid, CardType card) {
     SendNotifyMsg(roomid, uid, notifyDrawRetMsg);
 }
 
+void Provider::SendPredictResult(int roomid, int uid, int pos) {
+    ExplodingKittensProto::NotifyMsg notifyPredictMsg;
+
+    ExplodingKittensProto::PredictResult* predictResult =
+        notifyPredictMsg.mutable_predictresult();
+    predictResult->set_pos(pos);
+
+    SendNotifyMsg(roomid, uid, notifyPredictMsg);
+}
+
 void Provider::SendSeeThroughResult(int roomid, int uid,
                                     const std::vector<CardType>& cards) {
     ExplodingKittensProto::NotifyMsg notifySeeThroughMsg;

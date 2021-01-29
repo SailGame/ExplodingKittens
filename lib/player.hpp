@@ -199,7 +199,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            // TODO: tell user the pos of the first bomb
+            fsm.mGame.mProvider->SendPredictResult(
+                fsm.mGame.mCardPool->PredictBombPos());
         }
     };
     struct Swap {
