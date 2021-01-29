@@ -24,6 +24,12 @@ CardType CardPool::Front() { return mCards.front(); }
 CardType CardPool::Back() { return mCards.back(); }
 void CardPool::PopFront() { mCards.erase(mCards.begin()); }
 void CardPool::PopBack() { mCards.erase(mCards.end() - 1); }
+std::vector<CardType> CardPool::SeeThroughCards() {
+    if (mCards.size() >= 3)
+        return std::vector<CardType>(mCards.begin(), mCards.begin() + 3);
+    else
+        return mCards;
+}
 void CardPool::ShuffleCards() { random_shuffle(mCards.begin(), mCards.end()); }
 std::vector<std::vector<CardType>> CardPool::InitializePlayerCards() {
     for (auto it : CardMap) {

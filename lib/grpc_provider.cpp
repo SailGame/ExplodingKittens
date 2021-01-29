@@ -213,6 +213,18 @@ void Provider::SendDrawResult(int roomid, int uid, CardType card) {
     SendNotifyMsg(roomid, uid, notifyDrawRetMsg);
 }
 
+void Provider::SendSeeThroughResult(int roomid, int uid,
+                                    const std::vector<CardType>& cards) {
+    ExplodingKittensProto::NotifyMsg notifySeeThroughMsg;
+
+    ExplodingKittensProto::SeeThroughResult* seeThroughResult =
+        notifySeeThroughMsg.mutable_seethroughresult();
+    *(seeThroughResult->mutable_cards()) =
+        google::protobuf::RepeatedField<google::protobuf::int32>(cards.begin(),
+                                                                 cards.end());
+    SendNotifyMsg(roomid, uid, notifySeeThroughMsg);
+}
+
 void Provider::SendKO(int roomid, int uid, std::vector<int>& uids) {
     ExplodingKittensProto::NotifyMsg notifykoMsg;
 

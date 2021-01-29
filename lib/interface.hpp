@@ -21,6 +21,8 @@ class IProvider {
                                 const std::vector<CardType>&) = 0;
     virtual void SendExtortResult(int roomid, int uid, CardType card, int srcid,
                                   int dstid) = 0;
+    virtual void SendSeeThroughResult(int roomid, int uid,
+                                      const std::vector<CardType>&) = 0;
     virtual void SendDrawResult(int roomid, int uid, CardType card) = 0;
     virtual void SendKO(int roomid, int uid, std::vector<int>& uids) = 0;
 };
@@ -32,6 +34,7 @@ class ICardPool {
     virtual CardType Back() = 0;
     virtual void PopFront() = 0;
     virtual void PopBack() = 0;
+    virtual std::vector<CardType> SeeThroughCards() = 0;
     virtual void ShuffleCards() = 0;
     virtual std::vector<std::vector<CardType>> InitializePlayerCards() = 0;
     virtual void PrintCardPool() = 0;

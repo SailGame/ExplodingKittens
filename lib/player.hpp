@@ -137,7 +137,6 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
             fsm.mGame.NextPlayer();
-            // TODO: tell user end of the turn
         }
     };
     struct ShirkItself {
@@ -163,7 +162,6 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 if (fsm.mGame.mPlayers[i].mUid == evt.TargetUid) {
                     fsm.mGame.mPlayingPlayerPos = i;
                     fsm.mGame.mPlayers[i].process_event(EventMyTurn());
-                    // TODO: tell user shirked
                 }
             }
         }
@@ -178,7 +176,6 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             fsm.mCards.erase(pos);
             fsm.mGame.mClockwise = !fsm.mGame.mClockwise;
             fsm.mGame.NextPlayer();
-            // TODO: tell user end of the turn
         }
     };
     struct SeeThrough {
@@ -189,7 +186,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             auto pos =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(pos);
-            // TODO: tell user the first three cards
+            fsm.mGame.mProvider->SendSeeThroughResult(
+                fsm.mGame.mRoomId, fsm.mUid,
+                fsm.mGame.mCardPool->SeeThroughCards());
         }
     };
     struct Predict {

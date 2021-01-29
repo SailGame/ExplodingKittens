@@ -14,6 +14,7 @@ class MockCardPool : public ICardPool {
     MOCK_METHOD(CardType, Back, (), (override));
     MOCK_METHOD(void, PopFront, (), (override));
     MOCK_METHOD(void, PopBack, (), (override));
+    MOCK_METHOD(std::vector<CardType>, SeeThroughCards, (), (override));
     MOCK_METHOD(void, ShuffleCards, (), (override));
     MOCK_METHOD(std::vector<std::vector<CardType>>, InitializePlayerCards, (),
                 (override));
@@ -37,6 +38,9 @@ class MockProvider : public IProvider {
                 (override));
     MOCK_METHOD(void, SendExtortResult,
                 (int roomid, int uid, CardType card, int srcid, int dstid),
+                (override));
+    MOCK_METHOD(void, SendSeeThroughResult,
+                (int roomid, int uid, const std::vector<CardType>&),
                 (override));
     MOCK_METHOD(void, SendDrawResult, (int roomid, int uid, CardType card),
                 (override));
