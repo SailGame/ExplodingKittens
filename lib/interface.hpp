@@ -22,6 +22,7 @@ class IProvider {
     virtual void SendExtortResult(int roomid, int uid, CardType card, int srcid,
                                   int dstid) = 0;
     virtual void SendDrawResult(int roomid, int uid, CardType card) = 0;
+    virtual void SendKO(int roomid, int uid, std::vector<int>& uids) = 0;
 };
 
 class ICardPool {

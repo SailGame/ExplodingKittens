@@ -152,15 +152,22 @@ void Provider::HandleUserMsg(int roomid, int uid,
     }
 }
 
+void Provider::SendNotifyMsg(
+    int roomid, int uid, const ExplodingKittensProto::NotifyMsg& notifyMsg) {
+    Core::ProviderMsg providerMsg;
+    auto providerArgs = providerMsg.mutable_notifymsgargs();
+    providerArgs->set_roomid(roomid);
+    providerArgs->set_userid(uid);
+    providerArgs->mutable_custom()->PackFrom(notifyMsg);
+
+    mStream->Write(providerMsg);
+}
+
 void Provider::SendCardOperationRespond(int roomid, int uid,
                                         ExplodingKittensProto::CardType card,
                                         const std::vector<int>& uids,
                                         int targetuid) {
-    Core::ProviderMsg respondMsg;
-    auto* respondArgs = respondMsg.mutable_notifymsgargs();
-    respondArgs->set_roomid(roomid);
     ExplodingKittensProto::NotifyMsg notifyOperRespondMsg;
-
     ExplodingKittensProto::CardOperation* cardOperation =
         notifyOperRespondMsg.mutable_cardoperation();
     cardOperation->set_userid(uid);
@@ -168,67 +175,52 @@ void Provider::SendCardOperationRespond(int roomid, int uid,
     cardOperation->set_targetuid(targetuid);
     cardOperation->set_isdrawcard(card == ExplodingKittensProto::NONE ? true
                                                                       : false);
-
     for (auto id : uids) {
-        respondArgs->set_userid(id);
-        respondArgs->mutable_custom()->PackFrom(notifyOperRespondMsg);
-
-        mStream->Write(respondMsg);
+        SendNotifyMsg(roomid, id, notifyOperRespondMsg);
     }
 }
 
 void Provider::SendSwapResult(int roomid, int uid,
                               const std::vector<CardType>& cards) {
-    Core::ProviderMsg swapRetMsg;
-    auto* swapRetArgs = swapRetMsg.mutable_notifymsgargs();
-    swapRetArgs->set_roomid(roomid);
-    swapRetArgs->set_userid(uid);
     ExplodingKittensProto::NotifyMsg notifySwapRetMsg;
-
     ExplodingKittensProto::SwapResult* swapResult =
         notifySwapRetMsg.mutable_swapresult();
     *(swapResult->mutable_cards()) =
         google::protobuf::RepeatedField<google::protobuf::int32>(cards.begin(),
                                                                  cards.end());
-
-    swapRetArgs->mutable_custom()->PackFrom(notifySwapRetMsg);
-
-    mStream->Write(swapRetMsg);
+    SendNotifyMsg(roomid, uid, notifySwapRetMsg);
 }
 
 void Provider::SendExtortResult(int roomid, int uid, CardType card, int srcid,
                                 int dstid) {
-    Core::ProviderMsg extortRetMsg;
-    auto* extortRetArgs = extortRetMsg.mutable_notifymsgargs();
-    extortRetArgs->set_roomid(roomid);
-    extortRetArgs->set_userid(uid);
     ExplodingKittensProto::NotifyMsg notifyExtortRetMsg;
-
     ExplodingKittensProto::ExtortResult* extortResult =
         notifyExtortRetMsg.mutable_extortresult();
     extortResult->set_card(CardTypeToProtoCardType(card));
     extortResult->set_dstuid(dstid);
     extortResult->set_srcuid(srcid);
 
-    extortRetArgs->mutable_custom()->PackFrom(notifyExtortRetMsg);
-
-    mStream->Write(extortRetMsg);
+    SendNotifyMsg(roomid, uid, notifyExtortRetMsg);
 }
 
 void Provider::SendDrawResult(int roomid, int uid, CardType card) {
-    Core::ProviderMsg drawRetMsg;
-    auto* drawRetArgs = drawRetMsg.mutable_notifymsgargs();
-    drawRetArgs->set_roomid(roomid);
-    drawRetArgs->set_userid(uid);
     ExplodingKittensProto::NotifyMsg notifyDrawRetMsg;
 
     ExplodingKittensProto::DrawResult* drawResult =
         notifyDrawRetMsg.mutable_drawresult();
     drawResult->set_card(CardTypeToProtoCardType(card));
 
-    drawRetArgs->mutable_custom()->PackFrom(notifyDrawRetMsg);
+    SendNotifyMsg(roomid, uid, notifyDrawRetMsg);
+}
 
-    mStream->Write(drawRetMsg);
+void Provider::SendKO(int roomid, int uid, std::vector<int>& uids) {
+    ExplodingKittensProto::NotifyMsg notifykoMsg;
+
+    ExplodingKittensProto::KO* ko = notifykoMsg.mutable_ko();
+    ko->set_userid(uid);
+    for (auto id : uids) {
+        SendNotifyMsg(roomid, id, notifykoMsg);
+    }
 }
 
 #define TransitionFor(MsgT)                                     \

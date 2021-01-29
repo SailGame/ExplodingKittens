@@ -321,6 +321,12 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             }
         }
     };
+    struct GameOver {
+        action {
+            fsm.mGame.mProvider->SendKO(fsm.mGame.mRoomId, fsm.mUid,
+                                        fsm.mGame.mUids);
+        }
+    };
 #undef action
 
 #define guard                                                             \
@@ -393,7 +399,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
               Row<Extorted, ExtortCardSelected, Stopped, ExtortCardSelected,
                   DoesCardExist>,
               // exploding phase
-              Row<Exploding, PlayCardBombDisposal, Died, none, none>,
+              Row<Exploding, PlayCardBombDisposal, Died, GameOver, none>,
               Row<Exploding, PlayCardBombDisposal, Stopped, HandleExploding,
                   DoesCardExist>
               //  +---------+-------------+---------+---------------------------+----------------------+
