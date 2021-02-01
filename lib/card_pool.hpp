@@ -30,9 +30,12 @@ class CardPool : public ICardPool {
     virtual CardType Back() override;
     virtual void PopFront() override;
     virtual void PopBack() override;
+    virtual std::vector<CardType> SeeThroughCards() override;
+    virtual int PredictBombPos() override;
     virtual void ShuffleCards() override;
     virtual std::vector<std::vector<CardType>> InitializePlayerCards() override;
     virtual void PrintCardPool() override;
+    static const int PredictCardNum = 3;
 
    private:
     std::vector<CardType> mCards;

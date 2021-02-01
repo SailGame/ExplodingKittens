@@ -3,6 +3,7 @@
 #include <string>
 namespace ExplodingKittens {
 enum CardType {
+    None,
     Bomb,
     Skip,
     Shirk,

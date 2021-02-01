@@ -24,6 +24,19 @@ CardType CardPool::Front() { return mCards.front(); }
 CardType CardPool::Back() { return mCards.back(); }
 void CardPool::PopFront() { mCards.erase(mCards.begin()); }
 void CardPool::PopBack() { mCards.erase(mCards.end() - 1); }
+int CardPool::PredictBombPos() {
+    auto bombIt = std::find(mCards.begin(), mCards.end(), Bomb);
+    if (bombIt != mCards.end()) {
+        return bombIt - mCards.begin() + 1;
+    }
+    throw std::runtime_error("Bomb don't exist!");
+};
+std::vector<CardType> CardPool::SeeThroughCards() {
+    if (mCards.size() >= PredictCardNum)
+        return std::vector<CardType>(mCards.begin(), mCards.begin() + 3);
+    else
+        return mCards;
+}
 void CardPool::ShuffleCards() { random_shuffle(mCards.begin(), mCards.end()); }
 std::vector<std::vector<CardType>> CardPool::InitializePlayerCards() {
     for (auto it : CardMap) {
