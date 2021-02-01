@@ -23,6 +23,7 @@ class IProvider {
     virtual void SendSeeThroughResult(int roomid, int uid,
                                       const std::vector<CardType>&) = 0;
     virtual void SendDrawResult(int roomid, int uid, CardType card) = 0;
+    virtual void SendGetBomb(int roomid, int uid) = 0;
     virtual void SendKO(int roomid, int uid) = 0;
 };
 

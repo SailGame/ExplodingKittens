@@ -38,6 +38,7 @@ class Provider : public IProvider {
     virtual void SendPredictResult(int roomid, int uid, int pos) override;
     virtual void SendSeeThroughResult(int roomid, int uid,
                                       const std::vector<CardType>&) override;
+    virtual void SendGetBomb(int roomid, int uid) override;
     virtual void SendKO(int roomid, int uid) override;
 
    private:

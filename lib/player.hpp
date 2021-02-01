@@ -228,7 +228,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             fsm.mCards.erase(GetBottomIt);
             fsm.mCards.push_back(fsm.mGame.mCardPool->Back());
             fsm.mGame.mCardPool->PopBack();
-            // TODO: tell use current cards
+            fsm.mGame.mProvider->SendDrawResult(fsm.mGame.mRoomId, fsm.mUid,
+                                                fsm.mCards.back());
             fsm.mGame.NextPlayer();
         }
     };
@@ -238,7 +239,8 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(GetBottomIt);
             fsm.mGame.mCardPool->PopBack();
-            // TODO: tell use get bottom bomb
+
+            fsm.mGame.mProvider->SendGetBomb(fsm.mGame.mRoomId, fsm.mUid);
         }
     };
     struct Shuffle {
@@ -260,7 +262,6 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
             fsm.mCards.erase(BombDisposalIt);
             fsm.mGame.mCardPool->PutBackBomb(evt.pos);
-            // TODO: limit the position
             fsm.mGame.NextPlayer();
         }
     };
@@ -273,6 +274,12 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             fsm.mGame.mProvider->SendDrawResult(fsm.mGame.mRoomId, fsm.mUid,
                                                 fsm.mCards.back());
             fsm.mGame.NextPlayer();
+        }
+    };
+    struct DrawBomb {
+        action {
+            fsm.mGame.mProvider->SendDrawResult(fsm.mGame.mRoomId, fsm.mUid,
+                                                fsm.mCards.back());
         }
     };
     struct SelectExtortTarget {
@@ -385,7 +392,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
                   And_<DoesCardExist, IsBackBomb>>,
               // draw card phase
               Row<Playing, DrawCard, Stopped, StoreCard, none>,
-              Row<Playing, DrawCard, Exploding, none, IsFrontBomb>,
+              Row<Playing, DrawCard, Exploding, DrawBomb, IsFrontBomb>,
               // extorted phase
               Row<Extorted, ExtortCardSelected, Stopped, ExtortCardSelected,
                   DoesCardExist>,

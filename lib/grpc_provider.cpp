@@ -231,6 +231,16 @@ void Provider::SendSeeThroughResult(int roomid, int uid,
     SendNotifyMsg(roomid, uid, notifySeeThroughMsg);
 }
 
+void Provider::SendGetBomb(int roomid, int uid) {
+    ExplodingKittensProto::NotifyMsg notifyGetBombMsg;
+
+    ExplodingKittensProto::GetBomb* getBomb =
+        notifyGetBombMsg.mutable_getbomb();
+    getBomb->set_userid(uid);
+
+    SendNotifyMsg(roomid, 0, notifyGetBombMsg);
+}
+
 void Provider::SendKO(int roomid, int uid) {
     ExplodingKittensProto::NotifyMsg notifykoMsg;
 
