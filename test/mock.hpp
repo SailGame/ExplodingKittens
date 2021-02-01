@@ -28,11 +28,10 @@ class MockProvider : public IProvider {
                 (int roomid, int uid, const std::vector<CardType>&,
                  const std::vector<int>&),
                 (override));
-    MOCK_METHOD(void, SendRoundStart,
-                (int roomid, int uid, const std::vector<int>&), (override));
+    MOCK_METHOD(void, SendRoundStart, (int roomid, int uid), (override));
     MOCK_METHOD(void, SendCardOperationRespond,
                 (int roomid, int uid, ExplodingKittensProto::CardType card,
-                 const std::vector<int>& uids, int targetuid),
+                 int targetuid),
                 (override));
     MOCK_METHOD(void, SendSwapResult,
                 (int roomid, int uid, const std::vector<CardType>&),
@@ -47,8 +46,7 @@ class MockProvider : public IProvider {
                 (override));
     MOCK_METHOD(void, SendDrawResult, (int roomid, int uid, CardType card),
                 (override));
-    MOCK_METHOD(void, SendKO, (int roomid, int uid, std::vector<int>& uids),
-                (override));
+    MOCK_METHOD(void, SendKO, (int roomid, int uid), (override));
 };
 
 }  // namespace ExplodingKittens::Test

@@ -11,11 +11,9 @@ class IProvider {
     virtual void SendStartGame(int roomid, int uid,
                                const std::vector<CardType>&,
                                const std::vector<int>&) = 0;
-    virtual void SendRoundStart(int roomid, int uid,
-                                const std::vector<int>&) = 0;
+    virtual void SendRoundStart(int roomid, int uid) = 0;
     virtual void SendCardOperationRespond(int roomid, int uid,
                                           ExplodingKittensProto::CardType card,
-                                          const std::vector<int>& uids,
                                           int targetuid = -1) = 0;
     virtual void SendSwapResult(int roomid, int uid,
                                 const std::vector<CardType>&) = 0;
@@ -25,7 +23,7 @@ class IProvider {
     virtual void SendSeeThroughResult(int roomid, int uid,
                                       const std::vector<CardType>&) = 0;
     virtual void SendDrawResult(int roomid, int uid, CardType card) = 0;
-    virtual void SendKO(int roomid, int uid, std::vector<int>& uids) = 0;
+    virtual void SendKO(int roomid, int uid) = 0;
 };
 
 class ICardPool {

@@ -26,11 +26,9 @@ class Provider : public IProvider {
     virtual void SendStartGame(int roomid, int uid,
                                const std::vector<CardType>&,
                                const std::vector<int>&) override;
-    virtual void SendRoundStart(int roomid, int uid,
-                                const std::vector<int>&) override;
+    virtual void SendRoundStart(int roomid, int uid) override;
     virtual void SendCardOperationRespond(int roomid, int uid,
                                           ExplodingKittensProto::CardType card,
-                                          const std::vector<int>& uids,
                                           int targetuid = -1) override;
     virtual void SendSwapResult(int roomid, int uid,
                                 const std::vector<CardType>&) override;
@@ -40,7 +38,7 @@ class Provider : public IProvider {
     virtual void SendPredictResult(int roomid, int uid, int pos) override;
     virtual void SendSeeThroughResult(int roomid, int uid,
                                       const std::vector<CardType>&) override;
-    virtual void SendKO(int roomid, int uid, std::vector<int>& uids) override;
+    virtual void SendKO(int roomid, int uid) override;
 
    private:
     void Register();

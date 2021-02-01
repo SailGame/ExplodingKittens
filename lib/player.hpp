@@ -124,18 +124,16 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
 
     struct RoundStart {
         action {
-            fsm.mGame.mProvider->SendRoundStart(fsm.mGame.mRoomId, fsm.mUid,
-                                                fsm.mGame.mUids);
+            fsm.mGame.mProvider->SendRoundStart(fsm.mGame.mRoomId, fsm.mUid);
         }
     };
     struct EndOfTurn {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SKIP,
-                fsm.mGame.mUids);
-            auto pos =
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SKIP);
+            auto SkipIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(SkipIt);
             fsm.mGame.NextPlayer();
         }
     };
@@ -143,10 +141,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHIRK,
-                fsm.mGame.mUids, fsm.mUid);
-            auto pos =
+                fsm.mUid);
+            auto ShirkIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(ShirkIt);
             // TODO: tell user shirked
         }
     };
@@ -154,10 +152,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHIRK,
-                fsm.mGame.mUids, evt.TargetUid);
-            auto pos =
+                evt.TargetUid);
+            auto ShirkIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(ShirkIt);
             for (int i = 0; i < fsm.mGame.mPlayers.size(); ++i) {
                 if (fsm.mGame.mPlayers[i].mUid == evt.TargetUid) {
                     fsm.mGame.mPlayingPlayerPos = i;
@@ -169,11 +167,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct Reverse {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::REVERSE,
-                fsm.mGame.mUids);
-            auto pos =
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::REVERSE);
+            auto ReverseIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(ReverseIt);
             fsm.mGame.mClockwise = !fsm.mGame.mClockwise;
             fsm.mGame.NextPlayer();
         }
@@ -181,11 +178,11 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct SeeThrough {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SEE_THROUGH,
-                fsm.mGame.mUids);
-            auto pos =
+                fsm.mGame.mRoomId, fsm.mUid,
+                ExplodingKittensProto::SEE_THROUGH);
+            auto SeeThroughIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(SeeThroughIt);
             fsm.mGame.mProvider->SendSeeThroughResult(
                 fsm.mGame.mRoomId, fsm.mUid,
                 fsm.mGame.mCardPool->SeeThroughCards());
@@ -194,12 +191,12 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct Predict {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::PREDICT,
-                fsm.mGame.mUids);
-            auto pos =
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::PREDICT);
+            auto PredictIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(PredictIt);
             fsm.mGame.mProvider->SendPredictResult(
+                fsm.mGame.mRoomId, fsm.mUid,
                 fsm.mGame.mCardPool->PredictBombPos());
         }
     };
@@ -207,10 +204,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SWAPCARDS,
-                fsm.mGame.mUids, evt.TargetUid);
-            auto pos =
+                evt.TargetUid);
+            auto SwapIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(SwapIt);
             for (auto &player : fsm.mGame.mPlayers) {
                 if (player.mUid == evt.TargetUid) {
                     swap(fsm.mCards, player.mCards);
@@ -225,11 +222,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct GetBottom {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::GET_BOTTOM,
-                fsm.mGame.mUids);
-            auto pos =
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::GET_BOTTOM);
+            auto GetBottomIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(GetBottomIt);
             fsm.mCards.push_back(fsm.mGame.mCardPool->Back());
             fsm.mGame.mCardPool->PopBack();
             // TODO: tell use current cards
@@ -238,9 +234,9 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     };
     struct GetBottomBomb {
         action {
-            auto pos =
+            auto GetBottomIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(GetBottomIt);
             fsm.mGame.mCardPool->PopBack();
             // TODO: tell use get bottom bomb
         }
@@ -248,11 +244,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct Shuffle {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHUFFLE,
-                fsm.mGame.mUids);
-            auto pos =
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::SHUFFLE);
+            auto ShuffleIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(ShuffleIt);
             fsm.mGame.mCardPool->ShuffleCards();
         }
     };
@@ -260,10 +255,10 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid,
-                ExplodingKittensProto::BOMB_DISPOSAL, fsm.mGame.mUids);
-            auto pos =
+                ExplodingKittensProto::BOMB_DISPOSAL);
+            auto BombDisposalIt =
                 std::find(fsm.mCards.begin(), fsm.mCards.end(), evt.Card);
-            fsm.mCards.erase(pos);
+            fsm.mCards.erase(BombDisposalIt);
             fsm.mGame.mCardPool->PutBackBomb(evt.pos);
             // TODO: limit the position
             fsm.mGame.NextPlayer();
@@ -272,8 +267,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
     struct StoreCard {
         action {
             fsm.mGame.mProvider->SendCardOperationRespond(
-                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::NONE,
-                fsm.mGame.mUids);
+                fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::NONE);
             fsm.mCards.push_back(fsm.mGame.mCardPool->Front());
             fsm.mGame.mCardPool->PopFront();
             fsm.mGame.mProvider->SendDrawResult(fsm.mGame.mRoomId, fsm.mUid,
@@ -286,7 +280,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
             // if received, broadcast to every user: extort target
             fsm.mGame.mProvider->SendCardOperationRespond(
                 fsm.mGame.mRoomId, fsm.mUid, ExplodingKittensProto::EXTORT,
-                fsm.mGame.mUids, evt.TargetUid);
+                evt.TargetUid);
             for (auto &player : fsm.mGame.mPlayers) {
                 if (player.mUid == evt.TargetUid)
                     player.process_event(AskExtortCard(fsm.mUid));
@@ -322,10 +316,7 @@ struct Player_ : public msm::front::state_machine_def<Player_> {
         }
     };
     struct GameOver {
-        action {
-            fsm.mGame.mProvider->SendKO(fsm.mGame.mRoomId, fsm.mUid,
-                                        fsm.mGame.mUids);
-        }
+        action { fsm.mGame.mProvider->SendKO(fsm.mGame.mRoomId, fsm.mUid); }
     };
 #undef action
 

@@ -13,6 +13,14 @@ static ExplodingKittensProto::CardType CardTypeToProtoCardType(CardType card) {
     return ExplodingKittensProto::CardType(int(card));
 }
 
+template <typename T>
+inline void PopulateCards(
+    google::protobuf::RepeatedField<google::protobuf::int32>* grpcCards,
+    const std::vector<T>& cards) {
+    *grpcCards = google::protobuf::RepeatedField<google::protobuf::int32>(
+        cards.begin(), cards.end());
+}
+
 void Provider::Start() {
     mStream = mStub->Provider(&mContext);
     Register();
@@ -66,20 +74,15 @@ void Provider::SendStartGame(int roomid, int uid,
     ExplodingKittensProto::GameStart* gameStart =
         notifyStartGameMsg.mutable_gamestart();
     gameStart->set_userid(uid);
-    *(gameStart->mutable_userids()) =
-        google::protobuf::RepeatedField<google::protobuf::int32>(uids.begin(),
-                                                                 uids.end());
-    *(gameStart->mutable_cards()) =
-        google::protobuf::RepeatedField<google::protobuf::int32>(cards.begin(),
-                                                                 cards.end());
+    PopulateCards(gameStart->mutable_userids(), uids);
+    PopulateCards(gameStart->mutable_cards(), cards);
 
     startGameArgs->mutable_custom()->PackFrom(notifyStartGameMsg);
 
     mStream->Write(startGameMsg);
 }
 
-void Provider::SendRoundStart(int roomid, int uid,
-                              const std::vector<int>& uids) {
+void Provider::SendRoundStart(int roomid, int uid) {
     Core::ProviderMsg roundStartMsg;
     auto* roundStartArgs = roundStartMsg.mutable_notifymsgargs();
     roundStartArgs->set_roomid(roomid);
@@ -89,12 +92,10 @@ void Provider::SendRoundStart(int roomid, int uid,
         notifyRoundStartMsg.mutable_roundstart();
     roundStart->set_userid(uid);
 
-    for (auto id : uids) {
-        roundStartArgs->set_userid(id);
-        roundStartArgs->mutable_custom()->PackFrom(notifyRoundStartMsg);
+    roundStartArgs->set_userid(0);
+    roundStartArgs->mutable_custom()->PackFrom(notifyRoundStartMsg);
 
-        mStream->Write(roundStartMsg);
-    }
+    mStream->Write(roundStartMsg);
 }
 
 void Provider::Register() {
@@ -155,7 +156,7 @@ void Provider::HandleUserMsg(int roomid, int uid,
 void Provider::SendNotifyMsg(
     int roomid, int uid, const ExplodingKittensProto::NotifyMsg& notifyMsg) {
     Core::ProviderMsg providerMsg;
-    auto providerArgs = providerMsg.mutable_notifymsgargs();
+    auto* providerArgs = providerMsg.mutable_notifymsgargs();
     providerArgs->set_roomid(roomid);
     providerArgs->set_userid(uid);
     providerArgs->mutable_custom()->PackFrom(notifyMsg);
@@ -165,7 +166,6 @@ void Provider::SendNotifyMsg(
 
 void Provider::SendCardOperationRespond(int roomid, int uid,
                                         ExplodingKittensProto::CardType card,
-                                        const std::vector<int>& uids,
                                         int targetuid) {
     ExplodingKittensProto::NotifyMsg notifyOperRespondMsg;
     ExplodingKittensProto::CardOperation* cardOperation =
@@ -175,9 +175,7 @@ void Provider::SendCardOperationRespond(int roomid, int uid,
     cardOperation->set_targetuid(targetuid);
     cardOperation->set_isdrawcard(card == ExplodingKittensProto::NONE ? true
                                                                       : false);
-    for (auto id : uids) {
-        SendNotifyMsg(roomid, id, notifyOperRespondMsg);
-    }
+    SendNotifyMsg(roomid, 0, notifyOperRespondMsg);
 }
 
 void Provider::SendSwapResult(int roomid, int uid,
@@ -185,9 +183,8 @@ void Provider::SendSwapResult(int roomid, int uid,
     ExplodingKittensProto::NotifyMsg notifySwapRetMsg;
     ExplodingKittensProto::SwapResult* swapResult =
         notifySwapRetMsg.mutable_swapresult();
-    *(swapResult->mutable_cards()) =
-        google::protobuf::RepeatedField<google::protobuf::int32>(cards.begin(),
-                                                                 cards.end());
+    PopulateCards(swapResult->mutable_cards(), cards);
+
     SendNotifyMsg(roomid, uid, notifySwapRetMsg);
 }
 
@@ -229,20 +226,17 @@ void Provider::SendSeeThroughResult(int roomid, int uid,
 
     ExplodingKittensProto::SeeThroughResult* seeThroughResult =
         notifySeeThroughMsg.mutable_seethroughresult();
-    *(seeThroughResult->mutable_cards()) =
-        google::protobuf::RepeatedField<google::protobuf::int32>(cards.begin(),
-                                                                 cards.end());
+    PopulateCards(seeThroughResult->mutable_cards(), cards);
+
     SendNotifyMsg(roomid, uid, notifySeeThroughMsg);
 }
 
-void Provider::SendKO(int roomid, int uid, std::vector<int>& uids) {
+void Provider::SendKO(int roomid, int uid) {
     ExplodingKittensProto::NotifyMsg notifykoMsg;
 
     ExplodingKittensProto::KO* ko = notifykoMsg.mutable_ko();
     ko->set_userid(uid);
-    for (auto id : uids) {
-        SendNotifyMsg(roomid, id, notifykoMsg);
-    }
+    SendNotifyMsg(roomid, 0, notifykoMsg);
 }
 
 #define TransitionFor(MsgT)                                     \
